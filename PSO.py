@@ -10,8 +10,8 @@ from queue import Queue
 
 class PSO(Search):
     def start(self):
-        Search.star(self)
-        pso(self.get_obj_fxn(),self.lb,self.ub,f_ieqcons=self.nsp.get_PSO_Hard_fxn(), args = self.nsp.get_fitness_args(), swarmsize= self.S, maxiter=self.maxite, processes=10, omega=self.p_w,  phip= self.p_c1, phig=self.p_c2,debug=True,on_ite =self.ite_changed, on_new_best=self.new_best,on_info=self.new_msg)
+        Search.start(self)
+        pso(self.get_obj_fxn(),self.lb,self.ub,f_ieqcons=self.nsp.get_PSO_Hard_fxn(), args = self.nsp.get_fitness_args(), swarmsize= self.S, maxiter=self.maxite, processes=1, omega=self.omega,  phip= self.phip, phig=self.phig,debug=True,on_ite =self.ite_changed, on_new_best=self.new_best,on_info=self.new_msg)
         self.after_ended()
     
 
@@ -25,6 +25,8 @@ class PSO(Search):
         self.omega = w
         self.phip =c1
         self.phig = c2
+        
+        
 
         if pre_begin:
             self.BEGIN()

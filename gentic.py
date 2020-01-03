@@ -122,8 +122,6 @@ class gen_algo(Search):
         if(self.fx[i_min]<=self.fg):
             g= self.x[i_min,:].copy()
             fg = self.fx[i_min]
-            self.g = g
-            self.fg = fg
             self.new_best(ite,g,fg)
             #self.particles[] #handled by the new best method of the base
             return True

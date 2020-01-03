@@ -153,6 +153,8 @@ class Search(part_Holder):
         ==priv=inh==
         '''
         self.particles['g_best @ ite: %d Obj_fxn: %.3f'%(self.ite,fg)] = g
+        self.g = g
+        self.fg = fg
         if self.on_new_best:
             Search.events(self.on_new_best,ite=ite,nsp=self.nsp,g=g, fg=fg)
     
@@ -321,5 +323,8 @@ class Search(part_Holder):
         self.on_pause=[]
         self.on_play=[]
         self.on_start=[]
+
+        self.g =[]
+        self.fg =[]
 
         Thread(target=self.start).start()
