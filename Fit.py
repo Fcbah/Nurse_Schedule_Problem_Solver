@@ -4,6 +4,8 @@ class Fitness:
     '''
     This registers the fitness fxn
 
+    * Be CAREFUL  with HARD CONSTRAINTS they don't have fitness fxn since their value is -ve, and because there are some that returns tuples so always set is_obj_fxn to True 
+
     Parameters
     ==========
     fit_fxn: Function

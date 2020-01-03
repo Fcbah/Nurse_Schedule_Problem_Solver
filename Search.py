@@ -227,7 +227,7 @@ class Search(part_Holder):
         If search is ongoing, it allows you to pause for a while (till you PLAY)
         ==ext==
         '''
-        if self.can_pause:
+        if self.can_pause():
             self.playState = False
         else:
             self.new_msg(self.ite,'error','cannot PAUSE when already paused')
@@ -237,7 +237,7 @@ class Search(part_Holder):
         If search is on pause, it allow to PLAY and continue the search
         ==ext==
         '''
-        if self.can_play:
+        if self.can_play():
             self.playState = True
         else:
             self.new_msg(self.ite,'error','cannot PLAY when already played')

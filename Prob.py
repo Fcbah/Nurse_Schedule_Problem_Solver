@@ -134,8 +134,8 @@ class NSP(part_Holder):
         self.__nsp__ = dict(no_of_days=no_of_days,nurses_no=nurses_no,experienced_nurses_no=experienced_nurses_no)
         self.__arg_const__= dict(max_night_per_nurse=max_night_per_nurse,preference=preference,min_experienced_nurse_per_shift=min_experienced_nurse_per_shift,min_night_per_nurse=min_night_per_nurse)
         
-        self.H2 =  Fit.Const_Fxn(c.H2,self,viol_Type=None,Default_Weight=0)#nd2
-        self.H3 = Fit.Const_Fxn(c.H3b,self,viol_Type=None,Default_Weight=0)#nd2
+        self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,viol_Type=None,Default_Weight=0)#nd2
+        self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,viol_Type=None,Default_Weight=0)#nd2
         self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type='N',Default_Weight=4)#n
         self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type='D',Default_Weight=4)#d
         self.C2A1= Fit.Const_Fxn(c.C2A1,self,viol_Type=('D',1,1,1,1), Default_Weight=0)#d1
@@ -147,7 +147,7 @@ class NSP(part_Holder):
         self.C5 = Fit.Const_Fxn(c.C5,self,viol_Type= None,Default_Weight=1)#nd2
         self.C6 = Fit.Const_Fxn(c.C6,self,viol_Type=('N',0,0,0,1))#n1_n
         
-        self.H23 = Fit.Fitness(c.cons,self)
+        self.H23 = Fit.Fitness(c.cons,self,is_obj_fxn=True)
         self.hard_con_dict = dict(H2=self.H2,H3=self.H3)
         self.soft_con_dict = dict(C1=self.C1, C2A=self.C2A, C2A1=self.C2A1, C2B=self.C2B, C2B1=self.C2B1, C3=self.C3, C4=self.C4, C4B=self.C4B, C5=self.C5, C6=self.C6)
         
@@ -166,6 +166,8 @@ def on_n_b(ite=0,nsp=None,g=0,fg=0,*args,**kwargs):
     print_particle(g,*nsp.get_fitness_args())
     print('new best found on the %d iteration'%nsp.curr_search.ite)
     print('The fitness is: %.4f'%nsp.fitt.check_fit(g,*nsp.get_fitness_args()))
+    for m,n in nsp.soft_con_dict.items():
+        print('%s is %.4f'%(m,n.check_fit(g,*nsp.get_fitness_args())),end='\t')
 
 def on_i_c(ite=0,nsp=None,*args,**kwargs):
     '''
@@ -229,8 +231,8 @@ def conv1(m):
 if __name__ == '__main__':
     s = NSP()
     
-    #r = s.create_genetic_search(100,0.01,100)
-    r = s.create_PSO_search(100,100,c1=3,c2=10)
+    r = s.create_genetic_search(100,0.01,100)
+    #r = s.create_PSO_search(100,100,c1=3,c2=10)
     r.on_ite_changed.append(on_i_c)
     r.on_new_best.append(on_n_b)
     r.on_ended.append(on_n_m)
