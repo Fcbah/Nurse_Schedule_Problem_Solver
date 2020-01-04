@@ -64,8 +64,14 @@ class part_Holder:
         return self.fitt.obj_fxn
     
     def __init__(self,Fitness,particles={}):
-        self.fitt = Fitness
+        
+        from Fit import Fitness as F
+        if isinstance(Fitness,F):
+            self.fitt = Fitness
+        else:
+            raise TypeError('"Fitness" must be a valid instance of "Fitness"')
         self.particles = particles
+
 
 
 class Search(part_Holder):
@@ -301,7 +307,11 @@ class Search(part_Holder):
         part_Holder.__init__(self,Fitness=Fitness,particles={})
 
         self.maxite = maxite
-        self.nsp = nsp
+        from Prob import NSP
+        if isinstance(nsp, NSP):
+            self.nsp = nsp
+        else:
+            raise TypeError('"nsp" must be a valid instance of "NSP"')
         self.show_mean = show_mean
 
         self.ite=0

@@ -1,4 +1,4 @@
-import Prob as Fit_Prob
+#import Prob as Fit_Prob
 
 class Fitness:
     '''
@@ -47,8 +47,9 @@ class Fitness:
 
         self.Original_fxn = fxn
         self.is_obj_fxn = is_obj_fxn
-
-        if isinstance(NS_problem,Fit_Prob.NSP):
+        
+        from Prob import NSP
+        if isinstance(NS_problem,NSP):
             self.NS_problem = NS_problem
         else:
             raise TypeError('NS_problem must be a valid instance of NSP()')
