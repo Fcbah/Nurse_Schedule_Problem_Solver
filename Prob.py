@@ -1,6 +1,6 @@
 import numpy as np
 import Fit
-from PSO import PSO
+import PSO
 import Constraints as c
 from Search import Search, part_Holder
 from gentic import gen_algo
@@ -122,7 +122,7 @@ class NSP(part_Holder):
         m = self.fitt
         if Fitness_fxn != 'default' and isinstance(Fitness_fxn,Fit.Fitness):
             m = Fitness_fxn
-        return PSO(pop_size,self, m,max_ite,w=w,c1=c1,c2=c2)
+        return PSO.PSO(pop_size,self, m,max_ite,w=w,c1=c1,c2=c2)
 
     def __init__(self,no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse=3/14,preference=(4,2,2,2),min_experienced_nurse_per_shift=1,min_night_per_nurse=3/14):
         '''
@@ -137,7 +137,7 @@ class NSP(part_Holder):
         self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,viol_Type=None,Default_Weight=0)#nd2
         self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,viol_Type=None,Default_Weight=0)#nd2
         self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type='N',Default_Weight=4)#n
-        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type='D',Default_Weight=4)#d
+        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type='D',Default_Weight=0)#d
         self.C2A1= Fit.Const_Fxn(c.C2A1,self,viol_Type=('D',1,1,1,1), Default_Weight=0)#d1
         self.C2B = Fit.Const_Fxn(c.C2B,self,viol_Type='D',Default_Weight=0)#d
         self.C2B1 = Fit.Const_Fxn(c.C2B1,self,viol_Type=('D',1,1,1,1),Default_Weight=0)#d1
@@ -150,7 +150,7 @@ class NSP(part_Holder):
         self.H23 = Fit.Fitness(c.cons,self,is_obj_fxn=True)
         self.hard_con_dict = dict(H2=self.H2,H3=self.H3)
         self.soft_con_dict = dict(C1=self.C1, C2A=self.C2A, C2A1=self.C2A1, C2B=self.C2B, C2B1=self.C2B1, C3=self.C3, C4=self.C4, C4B=self.C4B, C5=self.C5, C6=self.C6)
-        
+                
         part_Holder.__init__(self,Fitness=Fit.Fitness_Fxn(self))
 
         self.curr_search = None
@@ -164,7 +164,7 @@ def on_n_b(ite=0,nsp=None,g=0,fg=0,*args,**kwargs):
     Event handler for on new best
     '''
     print_particle(g,*nsp.get_fitness_args())
-    print('new best found on the %d iteration'%nsp.curr_search.ite)
+    print('new best found on the %d iteration |-------|given obj %.5f fit %.5f'%(nsp.curr_search.ite,fg,1-fg))
     print('The fitness is: %.4f'%nsp.fitt.check_fit(g,*nsp.get_fitness_args()))
     for m,n in nsp.soft_con_dict.items():
         print('%s is %.4f'%(m,n.check_fit(g,*nsp.get_fitness_args())),end='\t')
@@ -173,7 +173,7 @@ def on_i_c(ite=0,nsp=None,*args,**kwargs):
     '''
     Event handler for on iteration changed
     '''
-    if ite%10 == 0:
+    if ite%50 == 0:
         print('This is the %d iteration'%ite)
 
 def on_n_m(ite=0,nsp=None,msg='',*args,**kwargs):
@@ -231,8 +231,9 @@ def conv1(m):
 if __name__ == '__main__':
     s = NSP()
     
-    r = s.create_genetic_search(100,0.01,100)
-    #r = s.create_PSO_search(100,100,c1=3,c2=10)
+    newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0.6,C4B=0.4,C5=1,C6=1)
+    r = s.create_genetic_search(10,0.01,10000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=newWeight))
+    #r = s.create_PSO_search(100,1000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=snewWeight))
     r.on_ite_changed.append(on_i_c)
     r.on_new_best.append(on_n_b)
     r.on_ended.append(on_n_m)
@@ -260,4 +261,4 @@ if __name__ == '__main__':
             print('maxiter is: %d'%s.curr_search.maxite)
             print('Fitness is: %.5f'%(1-r.fg))
         else:
-            break    
+            break

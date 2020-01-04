@@ -1,23 +1,23 @@
 from pyswarm import pso
 import numpy as np
-from Fit import Fitness
-from Search import Search
+#import Fit
+import Search
 #from Prob import NSP
 import time,sys
 from threading import Thread
 from queue import Queue
 
 
-class PSO(Search):
+class PSO(Search.Search):
     def start(self):
-        Search.start(self)
+        Search.Search.start(self)
         pso(self.get_obj_fxn(),self.lb,self.ub,f_ieqcons=self.nsp.get_PSO_Hard_fxn(), args = self.nsp.get_fitness_args(), swarmsize= self.S, maxiter=self.maxite, processes=1, omega=self.omega,  phip= self.phip, phig=self.phig,debug=True,on_ite =self.ite_changed, on_new_best=self.new_best,on_info=self.new_msg)
         self.after_ended()
     
 
     def __init__(self,pop_size,nsp,Fitness,maxite,lb=0,ub=4,w=0.5,c1=0.5,c2=0.5,pre_begin=False,show_means = False):
         
-        Search.__init__(self,maxite,Fitness,nsp,show_mean=show_means)
+        Search.Search.__init__(self,maxite,Fitness,nsp,show_mean=show_means)
         self.lb = lb*np.ones(self.D())
         self.ub = ub*np.ones(self.D())
         self.S = pop_size

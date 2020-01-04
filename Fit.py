@@ -1,4 +1,4 @@
-#import Prob
+import Prob as Fit_Prob
 
 class Fitness:
     '''
@@ -47,7 +47,11 @@ class Fitness:
 
         self.Original_fxn = fxn
         self.is_obj_fxn = is_obj_fxn
-        self.NS_problem = NS_problem
+
+        if isinstance(NS_problem,Fit_Prob.NSP):
+            self.NS_problem = NS_problem
+        else:
+            raise TypeError('NS_problem must be a valid instance of NSP()')
 
 class Const_Fxn(Fitness):
     '''
@@ -90,6 +94,17 @@ class Const_Dict(dict):
 '''
 
 class Fitness_Fxn(Fitness):
+    '''
+    Parameters
+    ==========
+    * NS_problem
+    Optional
+    ========
+    * const_fxns: Dictionary(key,Const_Fxn) 
+        Default = Const_Fxn.all_const, 
+    * weights: Dictionary(key,float)
+        Default = Const_Fxn.all_weight
+    '''
     def __fit_fxn__(self,x,*args):
         kg_sum=0
         summ=0
