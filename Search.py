@@ -107,6 +107,10 @@ class ab_Search():
     def is_started(self):
         assert False,'abstract method, must be implemented in class'
     
+    def get_ite(self):
+        assert False,'abstract method, must be implemented in class'
+    def get_maxiter(self):
+        assert False, 'abstract method, must be implemented in class'
     def get_fit_args(self):
         assert False,'abstract method, must be implemented in class'
     def get_no_of_days(self):
@@ -181,6 +185,7 @@ class Search(part_Holder,ab_Search):
 
         if self.__stop:
             tmp = self.ite - self.maxite
+            self.maxite = self.ite # this is because there is no way the system is going to update  the maxite again after this iteration
         elif self.ite == self.maxite:
             self.__stop = True
         if self.on_ite_changed:
@@ -324,7 +329,7 @@ class Search(part_Holder,ab_Search):
     
     def is_fresh(self):
         return not (self.started or self.__b4stop  or self.on_start or self.on_new_best or self.on_initialized or self.on_b4_ite_changed or self.on_ite_changed or self.on_aft_ite_changed or self.on_pause or self.on_play or self.on_error or self.on_ended)
-        
+
     def is_started(self):
         return self.started
     def has_ended(self):
@@ -340,7 +345,11 @@ class Search(part_Holder,ab_Search):
         if not self.__b4stop:
             self.__b4stop = func
         else: raise TypeError('b4stop cannot be multiply assigned')
-            
+
+    def get_ite(self):
+        return self.ite
+    def get_maxiter(self):
+        return self.maxite    
     def get_particles(self):
         '''
         This gives the particles cached by the Super Class "part_Holder" which are the global bests encountered during the search
