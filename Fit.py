@@ -83,8 +83,8 @@ class Const_Fxn(Fitness):
         self.__viol_fxn= fxn
         self.viol_Type = viol_Type
         Fitness.__init__(self,self.__new_fxn__,Ns_problem,is_obj_fxn=is_obj_fxn)
-                
-        name = str(fxn.__name__) + ' ' +str(Const_Fxn.count)
+
+        name = str(fxn.__name__) + ' ' + str(Const_Fxn.count)
         Const_Fxn.all_const[name] = self
         Const_Fxn.all_weight[name] = Default_Weight
         Const_Fxn.count +=1

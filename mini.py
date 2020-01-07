@@ -6,14 +6,14 @@ class NSP_Config:
 
     def __init__(self):
         self.particles = 100
-        self.max_itera = 10000
+        self.max_itera = 100
         self.nurses_no = 10
-        self.exprienced_nurses_no =4
+        self.exprienced_nurses_no = 4
         self.no_of_days = 14
         self.w = 0.5
         self.c1 = 3
         self.c2 = 10
-        self.preferences=(4,2,2,2)
+        self.preferences = (4,2,2,2)
         self.min_experienced_nurses_per_shift = 1
         self.min_night_per_day = 3/14
         self.max_night_per_day = 3/14 

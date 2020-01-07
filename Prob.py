@@ -2,7 +2,7 @@ import numpy as np
 import Fit
 import PSO
 import Constraints as c
-from Search import Search, part_Holder
+from Search import Search, part_Holder,ab_Search
 from gentic import gen_algo
 
 
@@ -91,17 +91,20 @@ class NSP(part_Holder):
             return True
         return False
 
-    def start_new_search(self,Search_Object,begin=True):
+    def start_new_search(self,Searchable,begin=True):
         '''
         This attaches the input search object to a nursing schedule problem
         and 
         '''
-        if self.can_search() and isinstance(Search_Object,Search):
-            if self.curr_search:
-                self.prev_searches['%dth search'%len(self.prev_searches)] = self.curr_search                
-            self.curr_search = Search_Object
-            if begin:
-                Search_Object.BEGIN()
+        if self.can_search():
+            if isinstance(Searchable,ab_Search):
+                if self.curr_search:
+                    self.prev_searches['%dth search'%len(self.prev_searches)] = self.curr_search                
+                self.curr_search = Searchable
+                if begin:
+                    Searchable.BEGIN()
+            else:
+                pass
         else:
             pass
     def create_genetic_search(self,pop_size,mutation_prob,maxite,Fitness_fxn='default'):

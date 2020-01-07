@@ -72,9 +72,51 @@ class part_Holder:
             raise TypeError('"Fitness" must be a valid instance of "Fitness"')
         self.particles = particles
 
+class ab_Search():
+    '''
+    + An abstract class to define the basic functionality of any search - like object
+    + Search monitors are also going to inherit from
+    + It will serve as the hook for NSP to hold either searches or monitors without having problem with their differences.
+    + It cannot inherit partHolder to avoid redundancy as the same set of particles will by must be hosted by both 'Search' and 'Search_Monitor' 
+    '''
+    def BEGIN(self):
+        assert False,'abstract method, must be implemented in class'
+    def EXTEND(self):
+        assert False,'abstract method, must be implemented in class'
+    def STOP(self):
+        assert False,'abstract method, must be implemented in class'
+    def PAUSE(self):
+        assert False,'abstract method, must be implemented in class'
+    def PLAY(self):
+        assert False,'abstract method, must be implemented in class'
+    
+    def set_b4stop(self):
+        assert False,'abstract method, must be implemented in class'
+    
+    def can_extend(self):
+        assert False,'abstract method, must be implemented in class'
+    def can_pause(self):
+        assert False,'abstract method, must be implemented in class'
+    def can_stop(self):
+        assert False,'abstract method, must be implemented in class'
+    def can_play(self):
+        assert False,'abstract method, must be implemented in class'
+    
+    def has_ended(self):
+        assert False,'abstract method, must be implemented in class'
+    def is_started(self):
+        assert False,'abstract method, must be implemented in class'
+    
+    def get_fit_args(self):
+        assert False,'abstract method, must be implemented in class'
+    def get_no_of_days(self):
+        assert False,'abstract method, must be implemented in class'
+    def get_nurses_no(self):
+        assert False,'abstract method, must be implemented in class'
+    def get_particles(self):
+        assert False,'abstract method, must be implemented in class'
 
-
-class Search(part_Holder):
+class Search(part_Holder,ab_Search):
     '''
     This is just a wrapper
     It gives a template for any Search object and makes sure all 
@@ -108,6 +150,9 @@ class Search(part_Holder):
         Returns the commanded change on maxite
         called every time iteration increases
         '''
+        if self.on_b4_ite_changed:
+            Search.events(self.on_b4_ite_changed,ite=ite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp)
+        
         self.ite = ite
         self.maxite = maxite
 
@@ -116,10 +161,16 @@ class Search(part_Holder):
             if(fp):
                 self.fp_queue.put((ite,np.mean(fp[np.isfinite(fp)]))) #filters out the infinite
         
+
         if not self.playState:
             self.d_pause(ite)
+                
+        #gives opportunity to extend (using b4stop()) if this is the last iteration and b4 stop whether due to extension of iteration reach maxiter
+        if self.__extend <= self.ite -self.maxite:
+            self.__extend = self.ite - self.maxite
+            self.__extend += self.__b4stop(ite=ite,maxite=maxite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp) if self.__b4stop else 0 
+
         tmp=0 #to store the extend variable
-        
         if self.__extend :
             if self.__extend > self.ite -self.maxite:
                 tmp = self.__extend
@@ -133,7 +184,9 @@ class Search(part_Holder):
         elif self.ite == self.maxite:
             self.__stop = True
         if self.on_ite_changed:
-            Search.events(self.on_ite_changed,ite=ite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp)        
+            Search.events(self.on_ite_changed,ite=ite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp)
+        if self.on_aft_ite_changed:
+            Search.events(self.on_aft_ite_changed,ite=ite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp)
         return tmp
     
     def new_msg(self,ite,typee,msg):
@@ -181,7 +234,7 @@ class Search(part_Holder):
         while not self.started:
             time.sleep(self.__delay_time)
         if self.on_start:
-            Search.events(self.on_start,ite=0,nsp=self.nsp)
+            Search.events(self.on_start,ite=-1,nsp=self.nsp)
         
     def BEGIN(self):
         '''
@@ -269,11 +322,30 @@ class Search(part_Holder):
         '''
         return not (self.playState or self.__stop)
     
+    def is_fresh(self):
+        return not (self.started or self.__b4stop  or self.on_start or self.on_new_best or self.on_initialized or self.on_b4_ite_changed or self.on_ite_changed or self.on_aft_ite_changed or self.on_pause or self.on_play or self.on_error or self.on_ended)
+        
     def is_started(self):
         return self.started
-    def is_ended(self):
-        return self.is_ended
+    def has_ended(self):
+        return self.ended
 
+    def set_b4stop(self,func):
+        '''
+        Sets the event handler for the b4stop event.
+        + Function format === func(ite=0,maxite=-1,nsp=None,x=[],fx=[],p=[],fp=[],*args,**kwargs)
+        + It can only be set once and should be set by the __main__ 
+
+        '''
+        if not self.__b4stop:
+            self.__b4stop = func
+        else: raise TypeError('b4stop cannot be multiply assigned')
+            
+    def get_particles(self):
+        '''
+        This gives the particles cached by the Super Class "part_Holder" which are the global bests encountered during the search
+        '''
+        return self.particles
     def get_fit_args(self):
         '''
         Returns a tuple containing all neccesary arguments for the fitness calculation - as specified by the NSP
@@ -286,13 +358,11 @@ class Search(part_Holder):
         ==inh==
         '''
         return self.nsp.get_nurses_no()
-
     def get_no_of_days(self):
         '''
         Returns the number of days the solution schedule must span
         '''
-        return self.nsp.get_no_of_days()
-    
+        return self.nsp.get_no_of_days()    
     def D(self):
         '''
         This is the dimension of the vectors in the problem space
@@ -307,11 +377,13 @@ class Search(part_Holder):
         part_Holder.__init__(self,Fitness=Fitness,particles={})
 
         self.maxite = maxite
+        
         from Prob import NSP
         if isinstance(nsp, NSP):
             self.nsp = nsp
         else:
             raise TypeError('"nsp" must be a valid instance of "NSP"')
+        
         self.show_mean = show_mean
 
         self.ite=0
@@ -325,7 +397,11 @@ class Search(part_Holder):
         self.__stop = False
         self.__delay_time = 0.5 #in seconds
 
+        self.__b4stop = None #is a single function event handler. To be handled in the __main__ file
+
+        self.on_b4_ite_changed=[]
         self.on_ite_changed=[]
+        self.on_aft_ite_changed=[] 
         self.on_new_best=[]
         self.on_initialized=[]
         self.on_error=[]

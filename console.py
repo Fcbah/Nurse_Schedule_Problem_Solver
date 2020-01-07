@@ -81,6 +81,7 @@ if __name__ == '__main__':
     newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0.6,C4B=0.4,C5=1,C6=1)
     r = s.create_genetic_search(10,0.01,10000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=newWeight))
     #r = s.create_PSO_search(100,1000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=snewWeight))
+    
     r.on_ite_changed.append(on_i_c)
     r.on_new_best.append(on_n_b)
     r.on_ended.append(on_n_m)
