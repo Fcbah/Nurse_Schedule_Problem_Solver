@@ -91,6 +91,13 @@ class ab_Search():
         assert False,'abstract method, must be implemented in class'
     
     def set_b4stop(self):
+        '''
+        Sets the event handler for the b4stop event.
+        + Function format === func(ite=0,maxite=-1,nsp=None,x=[],fx=[],p=[],fp=[],*args,**kwargs)
+        + Function format === Return Integer extension
+        + It can only be set once and should be set by the __main__ 
+
+        '''
         assert False,'abstract method, must be implemented in class'
     
     def can_extend(self):
@@ -169,10 +176,14 @@ class Search(part_Holder,ab_Search):
         if not self.playState:
             self.d_pause(ite)
                 
-        #gives opportunity to extend (using b4stop()) if this is the last iteration and b4 stop whether due to extension of iteration reach maxiter
-        if self.__extend <= self.ite -self.maxite:
+        #gives opportunity to extend (using b4stop()) if this is the last iteration and b4 stop whether due to extension of iteration reach maxiter or if the stop flag is already set
+        if self.__extend <= self.ite -self.maxite or self.__stop:
             self.__extend = self.ite - self.maxite
-            self.__extend += self.__b4stop(ite=ite,maxite=maxite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp) if self.__b4stop else 0 
+            self.__extend += self.__b4stop(ite=ite,maxite=maxite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp) if self.__b4stop else 0
+            #ensuring that  __stop flag does not take effect if undesired
+            if self.__extend > self.ite -self.maxite and self.__stop:
+                self.__stop = False
+
 
         tmp=0 #to store the extend variable
         if self.__extend :
@@ -339,6 +350,7 @@ class Search(part_Holder,ab_Search):
         '''
         Sets the event handler for the b4stop event.
         + Function format === func(ite=0,maxite=-1,nsp=None,x=[],fx=[],p=[],fp=[],*args,**kwargs)
+        + Function format === Return Integer extension
         + It can only be set once and should be set by the __main__ 
 
         '''

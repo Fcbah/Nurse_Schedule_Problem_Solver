@@ -42,6 +42,16 @@ def on_pl(ite=0,nsp=None,*args,**kwargs):
     '''
     print('Released (PLAYED) from pause at %d iteration'%ite)
 
+def set_stopfunc(ite=0,maxite=-1,nsp=None,x=[],fx=[],p=[],fp=[],*args,**kwargs):
+    '''
+    Event handler for b4_stop
+    '''
+    extt =input('Are you sure you want to stop now.\n press "ENTER" to continue \nELSE enter how much more iterations you want: ')
+    if extt=='':
+        return 0
+    else:
+        return int(extt)
+
 def print_particle(x,*args):
     """
     Prints out a particle as a schedule
@@ -90,7 +100,8 @@ if __name__ == '__main__':
     sr.add_on_error(on_n_m)
     sr.add_on_initialized(on_n_m)
     sr.add_on_pause(on_p)
-    sr.add_on_play(on_pl)    
+    sr.add_on_play(on_pl)
+    sr.set_b4stop(set_stopfunc)
 
     s.start_new_search(sr,False)
 

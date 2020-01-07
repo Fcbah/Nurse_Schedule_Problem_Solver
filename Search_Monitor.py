@@ -202,6 +202,16 @@ class Search_Timer(Search.ab_Search):
     def get_particles(self):
         return self._search_obj.get_particles()
     
+    def set_b4stop(self,func):
+        '''
+        Sets the event handler for the b4stop event.
+        + Function format === func(ite=0,maxite=-1,nsp=None,x=[],fx=[],p=[],fp=[],*args,**kwargs)
+        + Function format === Return Integer extension
+        + It can only be set once and should be set by the __main__ 
+
+        '''
+        self._search_obj.set_b4stop(func)
+
     def add_on_start(self,func):
         '''
         Adds a new event handler to the Search object's "on_start" event
