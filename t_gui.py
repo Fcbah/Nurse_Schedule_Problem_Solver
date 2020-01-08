@@ -7,6 +7,7 @@ class part_display(Canvas):
         if isinstance(nsp,Prob.NSP):
             self.problem = nsp
         Canvas.__init__(self,master)
+        self.mast = master
         self.__started = False #flag to ensure that I dont repeat drawing objects
         self.rect_dim = (40,40)
         self.init_rect = (20,20) # width of 1st column, height of 1st row
@@ -23,17 +24,31 @@ class part_display(Canvas):
                 for j in range(xx.shape[1]): #nurses no
                     x,y = self.get_location(i,j)
                     x1,y1 = x+self.rect_dim[0], y+self.rect_dim[1]
-                    
-                    self.create_rectangle(x,y,x1,y1)
+                    colm='white'
+                    if j < self.problem.get_experienced_nurses_no():
+                        colm='red'
+                    self.create_rectangle(x,y,x1,y1,fill=colm,tags='all')
                     
                     te = self.pader
 
                     mu = (self.rect_dim[0]/2,self.rect_dim[1]/2)
 
-                    self.create_oval(x+te,y+te,x1-te,y1-te,outline='red')
+                    self.create_oval(x+te,y+te,x1-te,y1-te,fill='red',outline='white',width=3,tags=('all','ovals'))
 
-                    self.create_text(x+mu[0],y+mu[1],text='%s'%part_display.conv(xx[i,j]))
+                    
+                    self.create_text(x+mu[0],y+mu[1],fill='white',font=('Times New Roman',12,'bold'),text='%s'%part_display.conv(xx[i,j]))
+            
+            werq = self.bbox('all')
+            t = (0,0,werq[2]-werq[0] + 2*self.init_rect[0],werq[3]-werq[1] + 2*self.init_rect[1])
+            self.configure(scrollregion=t, bg='white')            
+            xsroll= Scrollbar(self.mast,orient=HORIZONTAL,command=self.xview)
+            xsroll.pack(side=TOP,expand=NO,fill=X)
+            ysroll= Scrollbar(self.mast,orient=VERTICAL,command=self.yview)
+            ysroll.pack(side=LEFT,expand=NO,fill=Y)
+            self.configure(xscrollcommand=xsroll.set,yscrollcommand=ysroll.set)
+            self.pack(side=TOP,expand=YES,fill=BOTH)
             self.__started = True
+            
         else:
             pass
         
@@ -67,5 +82,4 @@ root = Tk()
 e = Prob.NSP()
 
 m = part_display(root,e,e.particles.copy().popitem()[1])
-m.pack()
 root.mainloop()
