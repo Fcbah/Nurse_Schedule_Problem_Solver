@@ -56,6 +56,25 @@ class gen_algo(Search):
         self.search()
         self.after_ended()
 
+    def regenerat(x,fit_args,lst_Hard,lb=0,ub=4):
+        '''
+        ==Class== ==ext==
+        To enable other objects to regenerate their random particles
+        x:np.ndarray
+            The particle to regenerate 
+        fit_args:list
+            A list of arguments for fitness function = nsp.get_fit_args()
+        lst_Hard: list of func
+            A list of Hard violation functions func(x,*fit_args) = nsp.get_hard_viol_fxns
+        '''
+        tmp=x.copy()
+        for m in lst_Hard:
+            ser = gen_algo.Hard_Viol(tmp,m,*fit_args)
+            while ser.sum():
+                tmp[ser] = np.random.randint(lb,ub,ser.sum())
+                ser = gen_algo.Hard_Viol(tmp,m,*fit_args)
+        return tmp
+
     def regenerate(self): 
         '''
         Transforms violating entries in x randomly within the [lb, ub) range

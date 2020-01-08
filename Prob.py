@@ -127,6 +127,58 @@ class NSP(part_Holder):
             m = Fitness_fxn
         return PSO.PSO(pop_size,self, m,max_ite,w=w,c1=c1,c2=c2)
 
+    def is_default(self):
+        '''
+        Returns True if the NSP is exactly the default 14 day schedule of 10 nurses...
+        '''
+        return True if self.get_no_of_days()==14 and self.get_nurses_no()==10 and self.get_experienced_nurses_no()==4 and self.get_max_night_per_nurse()==3/14 and self.get_preferences()==(4,2,2,2) and self.get_min_experienced_nurse_per_wshift()==1 and self.get_min_night_per_nurse()==3/14 else False
+    
+    def get_all_particles(self):
+        '''
+        Retrieve all particles both manual, current search or previous searches
+        '''
+        outp = self.particles
+        if self.curr_search:
+            outp += self.curr_search.get_particles()
+        if self.prev_searches:
+            for sech in self.prev_searches:
+                outp += sech.get_particles()
+        return outp
+    def get_all_constraints(self):
+        '''
+        Retrieve all Fitness constraints object associated with this nurse schedule problem
+        '''
+        return self.hard_con_dict + self.soft_con_dict
+    def get_all_fitness(self):
+        '''
+        Retrieve all Fitness object associated with this nurse schedule problem
+        '''
+        outp = self.get_all_constraints()        
+        outp['f_fx__default'] = self.fitt
+        
+        if self.curr_search:
+            outp['f_fx__curr_search'] = self.curr_search.fitt
+        
+        if self.prev_searches:
+            for k,sech in enumerate(self.prev_searches):
+                outp['f_fx_prev_search_%d'%k]=sech.fitt
+        if self.man_fitt:
+            outp += self.man_fitt
+        return outp
+    def add_new_man_fit(self,fitness,name=''):
+        '''
+        This adds a new fitness object to the list of manual fitness fxns 
+        using the specified name - To make avalaible in list of fitness objects
+        '''
+        if isinstance(fitness,Fit.Fitness):
+            self.man_fitt['man_fit_%s_%d'%(name,len(self.man_fitt))]
+    def create_rand_particle(self):
+        '''
+        Returns a regenerated random particle in a numpy integer ndarray
+        '''
+        y = np.random.randint(0,4,self.get_vect_len())
+        return gen_algo.regenerat(y,self.get_fitness_args(),self.get_Hard_Viol_fxns())
+
     def __init__(self,no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse=3/14,preference=(4,2,2,2),min_experienced_nurse_per_shift=1,min_night_per_nurse=3/14):
         '''
         Creates a new nursing schedule problem to be solved
@@ -159,6 +211,21 @@ class NSP(part_Holder):
         self.curr_search = None
         self.prev_searches= {}
 
+        self.particles['Rand_First'] = self.create_rand_particle()
+
+        if self.is_default():
+            self.particles['The Best'] = np.array([2,1,1,0,0,3,0,3,0,1,3,2,0,2,
+                                                    2,2,3,2,0,1,0,3,3,0,1,0,0,1,
+                                                    3,3,0,3,0,0,2,0,2,0,2,1,1,1,
+                                                    0,1,0,2,3,0,3,0,3,0,1,1,2,2,
+                                                    1,0,0,1,1,0,3,2,0,2,2,3,0,3,
+                                                    0,0,2,1,3,0,2,0,1,1,0,2,3,3,
+                                                    3,0,0,3,0,2,0,0,2,2,3,0,1,0,
+                                                    1,3,2,0,2,3,0,1,0,3,0,0,2,0,
+                                                    0,0,3,0,2,2,1,1,0,3,0,3,0,0,
+                                                    0,2,1,0,1,1,1,2,1,0,0,0,3,0])
+
+        self.man_fitt ={}
 
 
 

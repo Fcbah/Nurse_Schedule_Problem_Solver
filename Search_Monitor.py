@@ -25,6 +25,11 @@ ENDED = 4
 
 
 class Search_Timer(Search.ab_Search):
+    '''
+    This is a Search Monitor object. 
+    It takes in a Search object and perform allows you to investigate 
+    into it using several different types of timing operations
+    '''
 
     def _diff_cp(self):
         '''
