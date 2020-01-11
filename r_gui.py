@@ -631,7 +631,7 @@ scry = Scrollbar(f,orient=VERTICAL)
 
 gh = CanvWrap(f,r,scrx,scry)
 
-scrx.grid(side=TOP,expand=NO,fill=X)
+scrx.pack(side=TOP,expand=NO,fill=X)
 scry.pack(side=LEFT,expand=NO,fill=Y)
 gh.canvas.pack(side=RIGHT,expand=YES, fill=BOTH)
 
