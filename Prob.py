@@ -189,17 +189,17 @@ class NSP(part_Holder):
         self.__nsp__ = dict(no_of_days=no_of_days,nurses_no=nurses_no,experienced_nurses_no=experienced_nurses_no)
         self.__arg_const__= dict(max_night_per_nurse=max_night_per_nurse,preference=preference,min_experienced_nurse_per_shift=min_experienced_nurse_per_shift,min_night_per_nurse=min_night_per_nurse)
         
-        self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,viol_Type=None,Default_Weight=0)#nd2
-        self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,viol_Type=None,Default_Weight=0)#nd2
-        self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type='N',Default_Weight=4)#n
-        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type='D',Default_Weight=0)#d
+        self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,viol_Type=(None,),Default_Weight=0)#nd2
+        self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,viol_Type=(None,),Default_Weight=0)#nd2
+        self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type=('N',),Default_Weight=4)#n
+        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type=('D',),Default_Weight=0)#d
         self.C2A1= Fit.Const_Fxn(c.C2A1,self,viol_Type=('D',1,1,1,1), Default_Weight=0)#d1
-        self.C2B = Fit.Const_Fxn(c.C2B,self,viol_Type='D',Default_Weight=0)#d
+        self.C2B = Fit.Const_Fxn(c.C2B,self,viol_Type=('D',),Default_Weight=0)#d
         self.C2B1 = Fit.Const_Fxn(c.C2B1,self,viol_Type=('D',1,1,1,1),Default_Weight=0)#d1
         self.C3 = Fit.Const_Fxn(c.C3,self,viol_Type=('N',1,0,0,0),Default_Weight=1)#n1_O
-        self.C4 = Fit.Const_Fxn(c.C4,self,viol_Type='D',Default_Weight=1)#d
-        self.C4B = Fit.Const_Fxn(c.C4B,self,viol_Type=('D',0,1,1,1),Default_Weight=0)#d1_s
-        self.C5 = Fit.Const_Fxn(c.C5,self,viol_Type= None,Default_Weight=1)#nd2
+        self.C4 = Fit.Const_Fxn(c.C4,self,viol_Type=('D','E'),Default_Weight=1)#d
+        self.C4B = Fit.Const_Fxn(c.C4B,self,viol_Type=('D','E',0,1,1,1),Default_Weight=0)#d1_s
+        self.C5 = Fit.Const_Fxn(c.C5,self,viol_Type= (None,),Default_Weight=1)#nd2
         self.C6 = Fit.Const_Fxn(c.C6,self,viol_Type=('N',0,0,0,1))#n1_n
         
         self.H23 = Fit.Fitness(c.cons,self,is_obj_fxn=True)

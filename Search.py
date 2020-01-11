@@ -23,21 +23,31 @@ class part_Holder:
         '''
         return part_Holder.extr_aggreg(x,1,nurses_no,no_of_days)
     
-    def extr_aggreg_days(x,nurses_no,no_of_days):
+    def extr_aggreg_days(x,nurses_no,no_of_days,experienced_nurses=None):
         '''
         =Class=
         Returns the agregrate sum of shifts over all nurses for each day for each shifts (no_of_days,shift_no)(omen)
+        experienced nurses can be set to limit consideration to shift schedule of experienced nurses only
         ==priv=inh=ext==
         '''
-        return part_Holder.extr_aggreg(x,0,nurses_no,no_of_days)
+        return part_Holder.extr_aggreg(x,0,nurses_no,no_of_days,experienced_nurses)
     
-    def extr_aggreg(x,a,nurses_no,no_of_days):
+    def extr_aggreg(x,a,nurses_no,no_of_days,experienced=None):
         '''
         =Class=
         This is to avoid redundancy so we compress all ext_aggreg to one function with the 'a' parameter
+        days: a=0 collapses all the nurses  info for each day
+        nurses: a=1 collapses all days info for each nurse
         ==priv||==
         '''
         r = np.reshape(x,(nurses_no,no_of_days))
+        
+        if experienced:
+            if a:
+                raise TypeError('You cant isolate experienced nurses from others in this kind of case')
+            else:
+                r = r[:experienced,:]
+
         if a not in (0,1):
             raise ValueError('parameter a must be either 0 or 1')
         if x.dtype == int:
