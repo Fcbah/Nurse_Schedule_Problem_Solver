@@ -626,8 +626,8 @@ class CanvWrap:
 r = Prob.NSP()
 master = Tk()
 
-#f = Frame(master)
-g = Frame(master)
+f = Frame(master)
+g = Frame(f)
 #h = Frame(master)
 
 #g1 = Listbox(g)
@@ -638,7 +638,7 @@ g = Frame(master)
 #g2.pack(side=TOP,expand=NO,fill=X)
 #h1.pack(side=TOP, expand=NO, fill=X)
 
-scrx = Scrollbar(master,orient=HORIZONTAL)
+scrx = Scrollbar(f,orient=HORIZONTAL)
 scry = Scrollbar(g,orient=VERTICAL)
 gh = CanvWrap(g,r,scrx,scry)
 
@@ -658,6 +658,7 @@ gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
 scry.pack(side=RIGHT,expand=NO,fill=Y)
 g.pack(side=TOP,expand=YES, fill=BOTH)
 scrx.pack(side=BOTTOM,expand=NO,fill=X)
+f.pack(side=TOP,expand=YES, fill=BOTH)
 
 p =r.particles.copy().popitem()[1]
 
