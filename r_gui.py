@@ -626,8 +626,6 @@ class CanvWrap:
 r = Prob.NSP()
 master = Tk()
 
-f = Frame(master)
-g = Frame(f)
 #h = Frame(master)
 
 #g1 = Listbox(g)
@@ -638,28 +636,33 @@ g = Frame(f)
 #g2.pack(side=TOP,expand=NO,fill=X)
 #h1.pack(side=TOP, expand=NO, fill=X)
 
+f = Frame(master)
+info = Frame(master)
+
+g = Frame(f)
 scrx = Scrollbar(f,orient=HORIZONTAL)
+
+info1 = Listbox(info)
+info2 = Listbox(info)
+
 scry = Scrollbar(g,orient=VERTICAL)
 gh = CanvWrap(g,r,scrx,scry)
 
-#scrx.grid(row=1,column=0,sticky=EW)
-#scry.grid(row=0,column=1,sticky= NS)
-#gh.canvas.grid(row=0,column=0,sticky=NSEW)
 
-#g.pack(side=LEFT,expand=NO,fill=Y)
-#f.pack(side=LEFT, expand=YES, fill=BOTH)
-#h.pack(side=LEFT, expand=NO, fill=Y)
-
-#scrx.pack(side=TOP,expand=NO,fill=X)
-#scry.pack(side=LEFT,expand=NO,fill=Y)
-#gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
-
+#Packing
 gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
 scry.pack(side=RIGHT,expand=NO,fill=Y)
+
 g.pack(side=TOP,expand=YES, fill=BOTH)
 scrx.pack(side=BOTTOM,expand=NO,fill=X)
-f.pack(side=TOP,expand=YES, fill=BOTH)
 
+
+info1.pack(side=TOP,expand=NO,fill=X)
+info2.pack(side=TOP,expand=NO, fill=X)
+
+info.pack(side=LEFT,expand=NO, fill=BOTH)
+f.pack(side=RIGHT,expand=YES, fill=BOTH)
+#After Layout
 p =r.particles.copy().popitem()[1]
 
 gh.set_particle(p)
