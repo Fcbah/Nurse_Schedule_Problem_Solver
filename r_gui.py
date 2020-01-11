@@ -627,7 +627,7 @@ r = Prob.NSP()
 master = Tk()
 
 #f = Frame(master)
-#g = Frame(master)
+g = Frame(master)
 #h = Frame(master)
 
 #g1 = Listbox(g)
@@ -639,22 +639,25 @@ master = Tk()
 #h1.pack(side=TOP, expand=NO, fill=X)
 
 scrx = Scrollbar(master,orient=HORIZONTAL)
-scry = Scrollbar(master,orient=VERTICAL)
-gh = CanvWrap(master,r,scrx,scry)
+scry = Scrollbar(g,orient=VERTICAL)
+gh = CanvWrap(g,r,scrx,scry)
 
 #scrx.grid(row=1,column=0,sticky=EW)
 #scry.grid(row=0,column=1,sticky= NS)
-#gh.canvas.grid(row=0,column=0, sticky=NSEW)
-#gh.canvas.rowconfigure(0,weight=1)
-#gh.canvas.columnconfigure(0,weight=1)
+#gh.canvas.grid(row=0,column=0,sticky=NSEW)
 
 #g.pack(side=LEFT,expand=NO,fill=Y)
 #f.pack(side=LEFT, expand=YES, fill=BOTH)
 #h.pack(side=LEFT, expand=NO, fill=Y)
 
-scrx.pack(side=TOP,expand=NO,fill=X)
-scry.pack(side=LEFT,expand=NO,fill=Y)
+#scrx.pack(side=TOP,expand=NO,fill=X)
+#scry.pack(side=LEFT,expand=NO,fill=Y)
+#gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
+
 gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
+scry.pack(side=RIGHT,expand=NO,fill=Y)
+g.pack(side=TOP,expand=YES, fill=BOTH)
+scrx.pack(side=BOTTOM,expand=NO,fill=X)
 
 p =r.particles.copy().popitem()[1]
 
