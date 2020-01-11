@@ -363,6 +363,7 @@ def C3(x,*args):
     r = np.sum(np.logical_and(t>=0,t<1), axis=1)# sum of off days for each nurse
     ret = r > 0
     if args[-1]:
+        #return np.transpose(ret)# to meet up with the standard of (1,0,0,0)
         return ret
     else:
         return np.sum(ret)/nurses_no
@@ -479,7 +480,9 @@ def C6(x,*args):
     ret = (h/no_of_days) >= min_night_per_day
 
     if (args[-1]):
-        return h, ret
+        #return h, ret
+        #return transpose(ret) #to fulfil (0,0,0,1) it must be a column matrix
+        return ret
     else:
         return np.sum(ret)/nurses_no #nurses that obey/nurses_no
 

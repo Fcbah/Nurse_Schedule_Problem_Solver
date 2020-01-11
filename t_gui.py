@@ -103,11 +103,5 @@ class part_display(Canvas):
 
 root = Tk()
 e = Prob.NSP()
-
-for x in range(20):
-    if x not in range(10,15):
-        continue
-    print('alright %d'%x)
-
 m = part_display(root,e,e.particles.copy().popitem()[1])
 root.mainloop()

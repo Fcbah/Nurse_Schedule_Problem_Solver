@@ -35,13 +35,16 @@ def transform(matrix,typee=(0,1,1,1)):
     typee = list(typee[y-4:])
     
     ut = []
-    ct = 1
+    ct = 0
     fresh = True
     for r in typee:
         if r==0:
             x= np.ones(lent)*-1
         elif r==1:
-            x = matrix[:,ct]
+            if len(matrix.shape)>1:
+                x = matrix[:,ct]
+            else:
+                x = matrix[:]
             ct+=1
         else:
             raise ValueError('"typee" is not properly formatted, the last four entries must be machine-boolean-bits')
@@ -50,7 +53,7 @@ def transform(matrix,typee=(0,1,1,1)):
             fresh = False
             ut = np.array(x,dtype=int)
         else:
-            ut = np.vstack(ut,np.array(x,dtype=int))
+            ut = np.vstack((ut,np.array(x,dtype=int)))
     
     return np.transpose(ut)
 
@@ -176,7 +179,7 @@ class CanvWrap:
         Gets if the violation information we are examining is about experienced nurses or about all nurses
         + Can take either 'exp' or 'all'
         '''
-        return self.viol_type
+        return self.viol_people
     def _set_viol_people(self,value):
         '''
         Sets if the violation information we are examining is about experienced nurses or about all nurses
@@ -185,7 +188,7 @@ class CanvWrap:
         if value.lower() in ('exp','all'):
             self.viol_people = value.lower()
         else:
-            raise TypeError('Unknown option for "viol_people"')
+            raise ValueError('Unknown option for "viol_people"')
     def _get_singl_item(self,*args):
         k = set(self.canvas.find_withtag(args[0]))
         for r in args[1:]:
@@ -357,8 +360,13 @@ class CanvWrap:
                 #text
                 x,y=self._dim_rect[0]/2, self._dim_rect[1]/2
                 x1,y1= x1+x,y1+y
-                k = self.canvas.create_text(x1,y1p,fill=self.colors['text'],font=self._text_font,tags=('d%d'%i,'n%d'%j,'text','part','all'))
+                k = self.canvas.create_text(x1,y1,fill=self.colors['text'],font=self._text_font,tags=('d%d'%i,'n%d'%j,'text','part','all'))
                 self.canvas.itemconfigure(k,text=CanvWrap._conv(xx[i,j]))
+
+        x1,y1 = self._get_loc(0,0)
+        x2,y2 = self._get_loc(shp[0],shp[1])
+
+        k =self.canvas.create_rectangle(x1,y1,x2,y2, width=self._oval_lin_width, outline='black',tags=('out','part','all'))
     
     def create_extD_side(self):
         xx = self.extD_matrix.copy()
@@ -395,7 +403,7 @@ class CanvWrap:
                 x,y=self._dim_rect[0]/2, self._dim_rect[1]/2
                 x1,y1= x1+x,y1+y
                 k = self.canvas.create_text(x1,y1,fill=self.colors['text'],font=self._text_font,tags=('d%d'%i,'s%d'%j,'text','extD','all'))
-                self.canvas.itemconfigure(k,text=CanvWrap._conv(xx[i,j]))
+                self.canvas.itemconfigure(k,text=xx[i,j])
 
             #longRect
             p = self._oval_pad
@@ -445,7 +453,7 @@ class CanvWrap:
                 x,y=self._dim_rect[0]/2, self._dim_rect[1]/2
                 x1,y1= x1+x,y1+y
                 k = self.canvas.create_text(x1,y1,fill=self.colors['text'],font=self._text_font,tags=('d%d'%i,'s%d'%j,'text','extN','all'))
-                self.canvas.itemconfigure(k,text=CanvWrap._conv(xx[i,j]))
+                self.canvas.itemconfigure(k,text=xx[i,j])
             
             #longRect
             p = self._oval_pad
@@ -478,10 +486,23 @@ class CanvWrap:
 
         #ordering
         #default
-        self.canvas.tag_raise('rect','oval','longRect')#on a normal day longrect should not be seen atall except it carries the none ok or error tag.
+        self.canvas.tag_raise('rect','longRect')#on a normal day longrect should not be seen atall except it carries the none ok or error tag.
+        self.canvas.tag_raise('oval','longRect')
 
-        self.canvas.tag_raise('none','ok','error','rect')
-        self.canvas.tag_raise('none','ok','error','noViol')
+        self.canvas.tag_raise('out','rect')
+
+        self.canvas.tag_raise('oval','rect')
+        
+        self.canvas.tag_raise('none','rect')
+        self.canvas.tag_raise('ok','rect')
+        self.canvas.tag_raise('error','rect')
+        
+        self.canvas.tag_raise('none','noViol')
+        self.canvas.tag_raise('ok','noViol')
+        self.canvas.tag_raise('error','noViol')
+#        self.canvas.tag_raise('none','ok','error','noViol')
+        
+        self.canvas.tag_raise('text','all')
 
         werq = self.canvas.bbox('all')
         t = (0,0,werq[2]-werq[0] + 2*self._dim_init[0],werq[3]-werq[1] + 2*self._dim_init[1])
@@ -557,7 +578,7 @@ class CanvWrap:
                     self.canvas.addtag_withtag('noViol',k)
                 
                 k = self._get_singl_item('text','d%d'%i,'s%d'%j,'extD')
-                self.canvas.itemconfigure(k,text=CanvWrap._conv(xx[i,j]))
+                self.canvas.itemconfigure(k,text=xx[i,j])
             
             #longRect
             k = self._get_singl_item('longRect','d%d'%i,'extD')            
@@ -591,7 +612,7 @@ class CanvWrap:
                     self.canvas.addtag_withtag('noViol',k)
                 
                 k = self._get_singl_item('text','d%d'%i,'s%d'%j,'extN')
-                self.canvas.itemconfigure(k,text=CanvWrap._conv(xx[i,j]))
+                self.canvas.itemconfigure(k,text=xx[i,j])
                         
             #longRect
             k = self._get_singl_item('longRect','n%d'%i,'extN')
@@ -604,19 +625,20 @@ class CanvWrap:
 
 r = Prob.NSP()
 master = Tk()
-scrx = Scrollbar(master,orient=HORIZONTAL)
-scry = Scrollbar(master,orient=VERTICAL)
+f = Frame(master)
+scrx = Scrollbar(f,orient=HORIZONTAL)
+scry = Scrollbar(f,orient=VERTICAL)
 
-gh = CanvWrap(master,r,scrx,scry)
+gh = CanvWrap(f,r,scrx,scry)
 
-scrx.pack(side=TOP,expand=NO,fill=X)
+scrx.grid(side=TOP,expand=NO,fill=X)
 scry.pack(side=LEFT,expand=NO,fill=Y)
 gh.canvas.pack(side=RIGHT,expand=YES, fill=BOTH)
 
 p =r.particles.copy().popitem()[1]
 
 gh.set_particle(p)
-gh.set_violation(r.C1.viol_fxn(p,*r.get_fitness_args()),r.C1.viol_Type)
+gh.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
 gh.create_screen()
 #gh.update_screen()
 #gh.stop_showing_violations()
