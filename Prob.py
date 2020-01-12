@@ -146,9 +146,12 @@ class NSP(part_Holder):
         return outp
     def get_all_constraints(self):
         '''
+        returns a dictionary
         Retrieve all Fitness constraints object associated with this nurse schedule problem
         '''
-        return self.hard_con_dict + self.soft_con_dict
+        mm = self.hard_con_dict.copy()
+        mm.update(self.soft_con_dict)
+        return mm
     def get_all_fitness(self):
         '''
         Retrieve all Fitness object associated with this nurse schedule problem

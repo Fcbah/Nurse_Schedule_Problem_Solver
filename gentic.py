@@ -83,11 +83,16 @@ class gen_algo(Search):
         xn = self.x.copy()
         for i in range(self.S):
             tmp = xn[i]
-            for m in self.lst_Hard():
-                ser = gen_algo.Hard_Viol(tmp,m,*self.get_fit_args())
-                while ser.sum():
-                    tmp[ser] = np.random.randint(self.lb,self.ub,ser.sum())
+            undone = True
+            while(undone): #This ensures that if fulfiling a violation triggers another violation, there will still be a correction chance
+                undone = False
+                for m in self.lst_Hard():
                     ser = gen_algo.Hard_Viol(tmp,m,*self.get_fit_args())
+                    while ser.sum():
+                        undone = True
+                        tmp[ser] = np.random.randint(self.lb,self.ub,ser.sum())
+                        ser = gen_algo.Hard_Viol(tmp,m,*self.get_fit_args())
+        
             xn[i] =tmp
         self.x = xn
     

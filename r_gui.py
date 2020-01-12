@@ -57,6 +57,49 @@ def transform(matrix,typee=(0,1,1,1)):
     
     return np.transpose(ut)
 
+class widg_wrap:
+    def pack(self):
+        pass
+
+class progressbar:
+    def setvalue(self,value):
+        '''
+        Sets the current value of the Progressbar
+        + Must be a positive integer
+        '''        
+        if (not isinstance(value,int)) or value<0:
+            raise ValueError('Invalid value set for progress bar')
+        if value <self.limit<=0:
+            self.value = value
+    def setlimit(self,value):
+        '''
+        This is used to set the extent of the progress bar
+        + value must be a positive integer
+        '''
+        if (not isinstance(value,int)) or value<0:
+            raise ValueError('Invalid limit set for progress bar')
+        if value > self.value:
+            self.limit = value
+    def getwidget(self):
+        return self.__cv
+    def update(self):
+        if self.limit > 0:
+            w= self.__cv.width*self.value/self.limit
+        elif self.limit ==0:
+            w=0
+        else:
+            raise ValueError('Error with the value of progress bar limit')
+        h= self.__cv.height
+        self.__cv.coords(self.rect,0,0,w,h)
+
+    def __init__(self, master=None):
+        self.__cv = Canvas(master,bg='white')
+        self.limit =0
+        self.value =0
+        h=w=0
+        self.rect = self.__cv.create_rectangle(0,0,h,w,outline='',fill='#003400',)
+        self.__cv.after(500,func=self.update)
+
 class CanvWrap:
     '''
     A class to wrap the Particle/Violation displaying Canvas
@@ -500,7 +543,7 @@ class CanvWrap:
         self.canvas.tag_raise('none','noViol')
         self.canvas.tag_raise('ok','noViol')
         self.canvas.tag_raise('error','noViol')
-#        self.canvas.tag_raise('none','ok','error','noViol')
+        #self.canvas.tag_raise('none','ok','error','noViol')
         
         self.canvas.tag_raise('text','all')
 
@@ -623,45 +666,142 @@ class CanvWrap:
             else:
                 self.canvas.addtag_withtag('noViol',k)
 
+class const_fxn_selector(Frame):
+    '''
+    A class to wrap the list of hard constraints and radiobuttons to select them
+    Gives an option to get the viol_fxn object selected 
+    To get notified of selection change bind to self.selection_changed event
+    Parameters
+    ==========
+    viol_fxn: a list of tuple giving the ('text',const_fxn object) option for the NSP problem 
+    '''
+    def get_selected_const_fxn(self):
+        '''
+        Returns the selected "Violation_fxn" object If None then show_viol is set False
+        '''
+        if not self.show_viol:
+            return None
+        else:
+            return self.list_it[self.prev_sel1]            
+
+    def get_show_violation(self):
+        '''
+        Returns bool - if show_violation is selected or not
+        '''
+        return True if self.show_viol==self.TRUE else False
+    
+    def check_sel_change(self):
+        '''
+        ==priv==
+        triggers the selection-changed and show_viol_changed event
+        '''
+        k =self.list_w.curselection()
+        l =self.showViolation.get()
+        if  k != self.prev_sel:
+            if k :
+                self.prev_sel1= self.prev_sel= k
+                self.event_generate(self.selection_changed)
+            else:
+                self.prev_sel = k
+        
+        if  l != self.show_viol:
+            self.show_viol = l
+            if not l:
+                self.list_w.configure(state=DISABLED)
+            else:
+                self.list_w.configure(state=NORMAL)
+            self.event_generate(self.show_viol_changed)
+
+        self.list_w.after(500,self.check_sel_change)
+
+    def fill_list(self,funcs=[]):
+        '''
+        Adds a list of const_fxn object to the system
+        each item in funcs must be in the form (text,const_fxn)
+        '''
+        if funcs:
+            j =len(self.list_it)
+            for idd,t in enumerate(funcs):
+                self.list_it.insert(j+idd,t[1])
+                self.list_w.insert(j+idd,t[0])               
+
+    def __init__(self,master=None,viol_fxn=[]):
+        '''
+        viol_fxn: a list of tuple giving the ('text',const_fxn object) option for the NSP problem 
+        '''    
+        Frame.__init__(self,master)
+        
+        self.showViolation = IntVar()
+
+        self.TRUE = 1
+        self.__wrap = Frame(self)        
+        self.list_w=Listbox(self.__wrap)
+        self.scrolly= Scrollbar(self.__wrap,command=self.list_w.yview)
+        self.list_w.configure(yscrollcommand=self.scrolly.set)
+        self.list_w.pack(side=LEFT,expand=NO,fill=Y)
+        self.scrolly.pack(side=RIGHT,expand=NO,fill=Y)
+        
+        self.rad_show_viol = Checkbutton(self,text='Show Violation?',variable=self.showViolation,indicatoron=False)
+        self.rad_show_viol.pack(side=TOP,expand=NO,fill=X)
+        self.__wrap.pack(side=BOTTOM,expand=YES,fill=BOTH)
+                
+        self.selection_changed = '<<selection_changed>>'
+        self.show_viol_changed = '<<show_violation_changed>>'
+        #self.event_add(self.selection_changed,'<Destroy>')
+        #self.event_add(self.show_viol_changed.'<Destroy>')
+
+        self.list_it=[]
+        self.fill_list(viol_fxn)    
+        
+        if not viol_fxn:
+            self.show_viol = 0
+        else:
+            self.prev_sel = 0
+            self.prev_sel1 = 0  #last useful prev_sel1
+            self.list_w.selection_set(self.prev_sel1)
+
+            self.show_viol = self.TRUE #previously selected show violation
+        
+        self.showViolation.set(self.show_viol)
+
+        self.list_w.after(500,self.check_sel_change)
+    
+
 r = Prob.NSP()
 master = Tk()
-
-#h = Frame(master)
-
-#g1 = Listbox(g)
-#g2 = Listbox(g)
-#h1 = Listbox(h)
 
 #g1.pack(side=TOP,expand=NO,fill=X)
 #g2.pack(side=TOP,expand=NO,fill=X)
 #h1.pack(side=TOP, expand=NO, fill=X)
 
-f = Frame(master)
+dis = Frame(master)
 info = Frame(master)
 
-g = Frame(f)
-scrx = Scrollbar(f,orient=HORIZONTAL)
 
+sub_dis = Frame(dis)
+scrx = Scrollbar(dis,orient=HORIZONTAL)
+
+viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
 info1 = Listbox(info)
 info2 = Listbox(info)
 
-scry = Scrollbar(g,orient=VERTICAL)
-gh = CanvWrap(g,r,scrx,scry)
-
+scry = Scrollbar(sub_dis,orient=VERTICAL)
+gh = CanvWrap(sub_dis,r,scrx,scry)
 
 #Packing
 gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
 scry.pack(side=RIGHT,expand=NO,fill=Y)
 
-g.pack(side=TOP,expand=YES, fill=BOTH)
+sub_dis.pack(side=TOP,expand=YES, fill=BOTH)
 scrx.pack(side=BOTTOM,expand=NO,fill=X)
 
 
 info1.pack(side=TOP,expand=NO,fill=X)
 info2.pack(side=TOP,expand=NO, fill=X)
+viol.pack(side=BOTTOM,expand=YES,fill=BOTH)
 
 info.pack(side=LEFT,expand=NO, fill=BOTH)
-f.pack(side=RIGHT,expand=YES, fill=BOTH)
+dis.pack(side=RIGHT,expand=YES, fill=BOTH)
 #After Layout
 p =r.particles.copy().popitem()[1]
 
