@@ -100,7 +100,7 @@ class progressbar:
         self.rect = self.__cv.create_rectangle(0,0,h,w,outline='',fill='#003400',)
         self.__cv.after(500,func=self.update)
 
-class CanvWrap:
+class CanvWrap(Frame):
     '''
     A class to wrap the Particle/Violation displaying Canvas
     
@@ -316,22 +316,21 @@ class CanvWrap:
         self.create_extN_side()
         self.apply_color_and_order()
     
-    def __init__(self,mast,nsp,scrollx,scrolly):
+    def __init__(self,mast,nsp):
         if isinstance(nsp,Prob.NSP):
             self.problem = nsp
         else:
             raise TypeError('nsp must be a valid instance of NSP')
         
-        if isinstance(scrollx,Scrollbar):
-            self.scrollx = scrollx
-        else:
-            raise TypeError('Invalid type for "scrollx"')
+        Frame.__init__(self,mast)
+        
+        self._sub_dis = Frame(self)        
+        self.scrollx = Scrollbar(self,orient=HORIZONTAL)
+        self.scrolly = Scrollbar(self._sub_dis,orient=VERTICAL)
+        #gh = CanvWrap(sub_dis,r,scrx,scry)
+        self.canvas = Canvas(self._sub_dis)
 
-        if isinstance(scrolly,Scrollbar):
-            self.scrolly = scrolly
-        else:
-            raise TypeError('Invalid type for "scrolly"')   
-
+        
         self._dim_rect =(30,30)
         self._dim_init =(60,60)
         self._oval_pad = 2
@@ -358,13 +357,18 @@ class CanvWrap:
         self.extD_matrix = None
         #self.exp_extN_matrix = None #completely impossible, where was your brain while you were writing this
         self.exp_extD_matrix = None
-        self.particle=None
+        self.particle=None        
         
-        self.canvas = Canvas(mast)
         self.canvas.configure(xscrollcommand=self.scrollx.set,yscrollcommand=self.scrolly.set, bg='white')
         self.scrollx.configure(command=self.canvas.xview)
         self.scrolly.configure(command=self.canvas.yview)
 
+        self.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
+        self.scrolly.pack(side=RIGHT,expand=NO,fill=Y)
+        
+        self.scrollx.pack(side=BOTTOM,expand=NO,fill=X)
+        self._sub_dis.pack(side=TOP,expand=YES, fill=BOTH)
+        
         self.__started = False
  
     def wipe_all_screen(self):
@@ -819,15 +823,8 @@ master = Tk()
 #g2.pack(side=TOP,expand=NO,fill=X)
 #h1.pack(side=TOP, expand=NO, fill=X)
 
-dis = Frame(master)
+dis = CanvWrap(master,r)
 info = Frame(master)
-
-
-sub_dis = Frame(dis)
-scrx = Scrollbar(dis,orient=HORIZONTAL)
-
-scry = Scrollbar(sub_dis,orient=VERTICAL)
-gh = CanvWrap(sub_dis,r,scrx,scry)
 
 #viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
 info1 = Listbox(info)
@@ -837,15 +834,15 @@ info2 = Listbox(info)
 viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
 
 p =r.particles.copy().popitem()[1]
-gh.set_particle(p)
+dis.set_particle(p)
 #gh.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
-gh.stop_showing_violations()
+dis.stop_showing_violations()
 viol.set_show_violation(False)
     #print function output on screen
-gh.create_screen()
+dis.create_screen()
 
 
-yr = applyconst(gh,viol)        
+yr = applyconst(dis,viol)        
 
 viol.bind(viol.selection_changed,yr)
 viol.bind(viol.show_viol_changed,yr)
@@ -853,12 +850,6 @@ viol.bind(viol.show_viol_changed,yr)
 #*************************** STOP ************************************************
 
 #Packing
-gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
-scry.pack(side=RIGHT,expand=NO,fill=Y)
-
-sub_dis.pack(side=TOP,expand=YES, fill=BOTH)
-scrx.pack(side=BOTTOM,expand=NO,fill=X)
-
 
 info1.pack(side=TOP,expand=NO,fill=X)
 info2.pack(side=TOP,expand=NO, fill=X)
