@@ -266,10 +266,16 @@ class CanvWrap:
             self._set_viol_matrix(transform(matrix,violation))
         else:
             raise ValueError('Something is wrong here in CanvWrap.set_violation()')
- 
+    
+    def get_particle(self):
+        '''
+        Returns the current particle on display in a 1D numpy array 
+        '''
+        return self.particle
     def set_particle(self,x):
         '''
         ==ext==
+        Sets the particle to a 1D numpy array
         '''
         if isinstance(x,np.ndarray):
             self.particle = x
@@ -281,7 +287,6 @@ class CanvWrap:
             self.exp_extD_matrix = Search.part_Holder.extr_aggreg_days(x,self.problem.get_nurses_no(),self.problem.get_no_of_days(),self.problem.get_experienced_nurses_no())
         else:
             raise TypeError('must be a valid matrix object')
-    
     def stop_showing_violations(self):
         '''
         ==ext==
@@ -327,10 +332,10 @@ class CanvWrap:
         else:
             raise TypeError('Invalid type for "scrolly"')   
 
-        self._dim_rect =(40,40)
-        self._dim_init =(80,80)
-        self._oval_pad = 5
-        self._oval_lin_width = 3
+        self._dim_rect =(30,30)
+        self._dim_init =(60,60)
+        self._oval_pad = 2
+        self._oval_lin_width = 2
         self._long_rect_corner_rad = 5
         self._text_font = ('Times New Roman',12,'bold')
         self.colors = {'rect': {'exp':'orange','inExp':'white'},
@@ -593,7 +598,7 @@ class CanvWrap:
         xx = self.extD_matrix.copy()
         if self._get_viol_people() == 'exp':
             xx = self.exp_extD_matrix.copy()
-        elif self._get_viol_people != 'all':
+        elif self._get_viol_people() != 'all':
             raise ValueError('"viol_people" can only have the values "exp" or "all"')
 
         for i in range(self.problem.get_no_of_days()):
@@ -689,7 +694,20 @@ class const_fxn_selector(Frame):
         Returns bool - if show_violation is selected or not
         '''
         return True if self.show_viol==self.TRUE else False
-    
+    def set_show_violation(self,value):
+        '''
+        Set the show_violation button with a bool value
+        '''
+        if isinstance(value,bool):
+            if value:
+                self.show_viol = self.TRUE #it will be set in check sel and list will be enabled
+                self.list_w.configure(state = NORMAL)
+                self.showViolation.set(self.show_viol)
+            else:
+                self.show_viol = 0 #it will be set in check_sel and list will be disabled
+                self.showViolation.set(self.show_viol)
+                self.list_w.configure(state = DISABLED)
+        self.check_sel_change()
     def check_sel_change(self):
         '''
         ==priv==
@@ -699,11 +717,11 @@ class const_fxn_selector(Frame):
         l =self.showViolation.get()
         if  k != self.prev_sel:
             if k :
-                self.prev_sel1= self.prev_sel= k
+                self.prev_sel = k
+                self.prev_sel1=self.prev_sel[0]                
                 self.event_generate(self.selection_changed)
             else:
                 self.prev_sel = k
-        
         if  l != self.show_viol:
             self.show_viol = l
             if not l:
@@ -727,6 +745,7 @@ class const_fxn_selector(Frame):
 
     def __init__(self,master=None,viol_fxn=[]):
         '''
+        ####canwrap: is needed for the binding to the Canvas wrapers current particle
         viol_fxn: a list of tuple giving the ('text',const_fxn object) option for the NSP problem 
         '''    
         Frame.__init__(self,master)
@@ -744,7 +763,7 @@ class const_fxn_selector(Frame):
         self.rad_show_viol = Checkbutton(self,text='Show Violation?',variable=self.showViolation,indicatoron=False)
         self.rad_show_viol.pack(side=TOP,expand=NO,fill=X)
         self.__wrap.pack(side=BOTTOM,expand=YES,fill=BOTH)
-                
+        
         self.selection_changed = '<<selection_changed>>'
         self.show_viol_changed = '<<show_violation_changed>>'
         #self.event_add(self.selection_changed,'<Destroy>')
@@ -756,7 +775,7 @@ class const_fxn_selector(Frame):
         if not viol_fxn:
             self.show_viol = 0
         else:
-            self.prev_sel = 0
+            self.prev_sel = (0,)
             self.prev_sel1 = 0  #last useful prev_sel1
             self.list_w.selection_set(self.prev_sel1)
 
@@ -766,6 +785,32 @@ class const_fxn_selector(Frame):
 
         self.list_w.after(500,self.check_sel_change)
     
+class applyconst:
+    '''
+    For const_fxn_selector.selection_changed
+    A event handler function callback wrapper to keep record of parameters
+    Parameters
+    ==========
+    canwrap: CavWrap object
+        It is the display that host the nsp problem, the current particle and co
+    selector: const_fxn_selector
+        It is a constriant function selector
+    '''
+    def __call__(self,*rag):
+        if self.selector.get_show_violation():
+            constfxn = self.selector.get_selected_const_fxn()
+            pa = self.display.get_particle()
+            args = self.display.problem.get_fitness_args()
+            self.display.set_violation(constfxn.viol_fxn(pa,*args),constfxn.viol_Type)            
+        else:
+            self.display.stop_showing_violations()
+        
+        self.display.create_screen()
+
+    def __init__(self,canwrap,selector):
+        self.display = canwrap
+        self.selector = selector
+
 
 r = Prob.NSP()
 master = Tk()
@@ -781,12 +826,31 @@ info = Frame(master)
 sub_dis = Frame(dis)
 scrx = Scrollbar(dis,orient=HORIZONTAL)
 
-viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
+scry = Scrollbar(sub_dis,orient=VERTICAL)
+gh = CanvWrap(sub_dis,r,scrx,scry)
+
+#viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
 info1 = Listbox(info)
 info2 = Listbox(info)
 
-scry = Scrollbar(sub_dis,orient=VERTICAL)
-gh = CanvWrap(sub_dis,r,scrx,scry)
+#******************** START *************************************************
+viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
+
+p =r.particles.copy().popitem()[1]
+gh.set_particle(p)
+#gh.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
+gh.stop_showing_violations()
+viol.set_show_violation(False)
+    #print function output on screen
+gh.create_screen()
+
+
+yr = applyconst(gh,viol)        
+
+viol.bind(viol.selection_changed,yr)
+viol.bind(viol.show_viol_changed,yr)
+
+#*************************** STOP ************************************************
 
 #Packing
 gh.canvas.pack(side=LEFT,expand=YES,fill=BOTH)
@@ -803,11 +867,6 @@ viol.pack(side=BOTTOM,expand=YES,fill=BOTH)
 info.pack(side=LEFT,expand=NO, fill=BOTH)
 dis.pack(side=RIGHT,expand=YES, fill=BOTH)
 #After Layout
-p =r.particles.copy().popitem()[1]
-
-gh.set_particle(p)
-gh.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
-gh.create_screen()
 #gh.update_screen()
 #gh.stop_showing_violations()
 
