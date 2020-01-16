@@ -192,8 +192,10 @@ class NSP(part_Holder):
         self.__nsp__ = dict(no_of_days=no_of_days,nurses_no=nurses_no,experienced_nurses_no=experienced_nurses_no)
         self.__arg_const__= dict(max_night_per_nurse=max_night_per_nurse,preference=preference,min_experienced_nurse_per_shift=min_experienced_nurse_per_shift,min_night_per_nurse=min_night_per_nurse)
         
-        self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,viol_Type=(None,),Default_Weight=0)#nd2
-        self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,viol_Type=(None,),Default_Weight=0)#nd2
+        #H2 and H3 are obj_fxn because the measure extent of violations in the -ve direction
+        self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0)#nd2
+        self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0)#nd2
+        
         self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type=('N',),Default_Weight=4)#n
         self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type=('D',),Default_Weight=0)#d
         self.C2A1= Fit.Const_Fxn(c.C2A1,self,viol_Type=('D',1,1,1,1), Default_Weight=0)#d1

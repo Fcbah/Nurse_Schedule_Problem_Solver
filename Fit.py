@@ -14,20 +14,26 @@ class Fitness:
         fitness_fxn = 1 - Objective_fxn
         It must be a normalized fxn  i.e 0 <= fit_fxn <= 1 
     '''
-    def __opp_fxn(self,x,*args):
-        m = self.Original_fxn
-        return 1 - m(x,*args)
+    def opp_fxn(self,x,*args):
+        m = self.Original_fxn(x,*args)
+        if isinstance(m,tuple):
+            together =()
+            for y in m:
+                together = together + (1-y,)
+            return together
+        else:
+            return 1 - m
 
     def obj_fxn(self,x,*args):
         if self.is_obj_fxn:
             return self.Original_fxn(x,*args)
         else:
-            return self.__opp_fxn(x,*args)
+            return self.opp_fxn(x,*args)
         
 
     def check_fit(self,x,*args):
         if self.is_obj_fxn:
-            return self.__opp_fxn(x,*args)
+            return self.opp_fxn(x,*args)
         else:
             return self.Original_fxn(x,*args)
 
@@ -80,9 +86,16 @@ class Const_Fxn(Fitness):
     def viol_fxn(self,x, *args):
         return self.__viol_fxn(x, *args, True)
     
-    def __init__(self,fxn,Ns_problem,is_obj_fxn=False, viol_Type= None,Default_Weight =1):
+    def opp_fxn(self,x,*args):
+        if self.is_Hard:
+            m = self.Original_fxn
+            return -1 *(1 + m(x,*args))
+        else:
+            return Fitness.opp_fxn(self,x,*args)
+    def __init__(self,fxn,Ns_problem,is_Hard=False,is_obj_fxn=False, viol_Type= None,Default_Weight =1):
         self.__viol_fxn= fxn
         self.viol_Type = viol_Type
+        self.is_Hard = is_Hard
         Fitness.__init__(self,self.__new_fxn__,Ns_problem,is_obj_fxn=is_obj_fxn)
 
         name = str(fxn.__name__) + ' ' + str(Const_Fxn.count)
