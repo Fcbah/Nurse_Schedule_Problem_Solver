@@ -324,6 +324,8 @@ class Search(part_Holder,ab_Search):
         '''
         if self.can_play():
             self.playState = True
+        elif not self.is_started():
+            self.BEGIN()
         else:
             self.new_msg(self.ite,'error','cannot PLAY when already played')
 
@@ -344,13 +346,22 @@ class Search(part_Holder,ab_Search):
         return self.playState and (not self.__stop)
     def can_play(self):
         '''
+        This is different from self.playable
         ==priv=inh=ext==
         '''
         return not (self.playState or self.__stop)
     
-    def is_fresh(self):
-        return not (self.started or self.__b4stop  or self.on_start or self.on_new_best or self.on_initialized or self.on_b4_ite_changed or self.on_ite_changed or self.on_aft_ite_changed or self.on_pause or self.on_play or self.on_error or self.on_ended)
+    def playable(self):
+        '''
+        This checks if the play button will work without raising error
+        '''
+        return not self.is_started() or self.can_play()
 
+    def is_fresh(self):
+        '''
+        Check if it is fit as an argument to search monitor, that is vital attributes have not been tampered with
+        '''
+        return not (self.started or self.__b4stop  or self.on_start or self.on_new_best or self.on_initialized or self.on_b4_ite_changed or self.on_ite_changed or self.on_aft_ite_changed or self.on_pause or self.on_play or self.on_error or self.on_ended)
     def is_started(self):
         return self.started
     def has_ended(self):

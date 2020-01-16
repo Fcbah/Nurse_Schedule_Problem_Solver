@@ -57,11 +57,7 @@ def transform(matrix,typee=(0,1,1,1)):
     
     return np.transpose(ut)
 
-class widg_wrap:
-    def pack(self):
-        pass
-
-class progressbar:
+class progressbar(Frame):
     def setvalue(self,value):
         '''
         Sets the current value of the Progressbar
@@ -84,20 +80,37 @@ class progressbar:
         return self.__cv
     def update(self):
         if self.limit > 0:
-            w= self.__cv.width*self.value/self.limit
+            w= self.__cv.winfo_width()*self.value/self.limit
+            p = self.value/self.limit *100
         elif self.limit ==0:
             w=0
+            p=0
         else:
             raise ValueError('Error with the value of progress bar limit')
-        h= self.__cv.height
+        h= self.__cv.winfo_height()
         self.__cv.coords(self.rect,0,0,w,h)
+        self.tx.configure(text='%d%%'%p)
+        #self.value -= 1 #was only for testing
+        self.after(500,self.update)
 
     def __init__(self, master=None):
-        self.__cv = Canvas(master,bg='white')
-        self.limit =0
-        self.value =0
+        self.tx_font =('Helvetica',12,'bold')
+        self.fill_col = '#00ee00'
+        self.hei = 50
+
+        Frame.__init__(self,master,bg='white')
+        self.__cv = Canvas(self,bg='white',borderwidth = 5,relief=SUNKEN,height=self.hei)
+        self.tx = Label(self,bg='white',fg='orange')
+        
+        self.limit =1000
+        self.value =500
         h=w=0
-        self.rect = self.__cv.create_rectangle(0,0,h,w,outline='',fill='#003400',)
+        self.rect = self.__cv.create_rectangle(0,0,h,w,outline='',fill=self.fill_col)
+        self.tx.configure(text='%.2f%%'%self.limit*100,padx=2,font=self.tx_font)
+        
+        self.__cv.pack(side=LEFT,expand=YES,fill=X)
+        self.tx.pack(side=RIGHT,expand=NO)
+
         self.__cv.after(500,func=self.update)
 
 class CanvWrap(Frame):
@@ -815,50 +828,53 @@ class applyconst:
         self.display = canwrap
         self.selector = selector
 
+if __name__ == "__main__":        
+    r = Prob.NSP()
+    master = Tk()
 
-r = Prob.NSP()
-master = Tk()
-
-#g1.pack(side=TOP,expand=NO,fill=X)
-#g2.pack(side=TOP,expand=NO,fill=X)
-#h1.pack(side=TOP, expand=NO, fill=X)
-
-dis = CanvWrap(master,r)
-info = Frame(master)
-
-#viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
-info1 = Listbox(info)
-info2 = Listbox(info)
-
-#******************** START *************************************************
-viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
-
-p =r.particles.copy().popitem()[1]
-dis.set_particle(p)
-#gh.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
-dis.stop_showing_violations()
-viol.set_show_violation(False)
-    #print function output on screen
-dis.create_screen()
+    Top= Frame(master)
+    bot = progressbar(master)
 
 
-yr = applyconst(dis,viol)        
+    dis = CanvWrap(Top,r)
+    info = Frame(Top)
 
-viol.bind(viol.selection_changed,yr)
-viol.bind(viol.show_viol_changed,yr)
+    #viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
+    info1 = Listbox(info)
+    info2 = Listbox(info)
 
-#*************************** STOP ************************************************
+    #******************** START *************************************************
+    viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
 
-#Packing
+    p =r.particles.copy().popitem()[1]
+    dis.set_particle(p)
+    #gh.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
+    dis.stop_showing_violations()
+    viol.set_show_violation(False)
+        #print function output on screen
+    dis.create_screen()
 
-info1.pack(side=TOP,expand=NO,fill=X)
-info2.pack(side=TOP,expand=NO, fill=X)
-viol.pack(side=BOTTOM,expand=YES,fill=BOTH)
 
-info.pack(side=LEFT,expand=NO, fill=BOTH)
-dis.pack(side=RIGHT,expand=YES, fill=BOTH)
-#After Layout
-#gh.update_screen()
-#gh.stop_showing_violations()
+    yr = applyconst(dis,viol)        
 
-master.mainloop()
+    viol.bind(viol.selection_changed,yr)
+    viol.bind(viol.show_viol_changed,yr)
+
+    #*************************** STOP ************************************************
+
+    #Packing
+
+    info1.pack(side=TOP,expand=NO,fill=X)
+    viol.pack(side=TOP,expand=YES,fill=BOTH)
+    info2.pack(side=TOP,expand=NO, fill=X)
+
+    info.pack(side=LEFT,expand=NO, fill=BOTH)
+    dis.pack(side=RIGHT,expand=YES, fill=BOTH)
+
+    Top.pack(side=TOP,expand=YES,fill=BOTH)
+    bot.pack(side=BOTTOM,expand=NO,fill=X)
+    #After Layout
+    #gh.update_screen()
+    #gh.stop_showing_violations()
+
+    master.mainloop()
