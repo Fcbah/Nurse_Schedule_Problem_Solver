@@ -37,7 +37,7 @@ class Fitness:
         else:
             return self.Original_fxn(x,*args)
 
-    def __init__(self,fxn,NS_problem,is_obj_fxn=False):
+    def __init__(self,fxn,NS_problem,is_obj_fxn=False,Description="This is a fitness function"):
         
         '''
         This registers the fitness fxn
@@ -50,7 +50,7 @@ class Fitness:
             fitness_fxn = 1 - Objective_fxn
             It must be a normalized fxn  i.e 0 <= fit_fxn <= 1 
         '''
-
+        self.description = Description
         self.Original_fxn = fxn
         self.is_obj_fxn = is_obj_fxn
         
@@ -92,11 +92,11 @@ class Const_Fxn(Fitness):
             return -1 *(1 + m(x,*args))
         else:
             return Fitness.opp_fxn(self,x,*args)
-    def __init__(self,fxn,Ns_problem,is_Hard=False,is_obj_fxn=False, viol_Type= None,Default_Weight =1):
+    def __init__(self,fxn,Ns_problem,is_Hard=False,is_obj_fxn=False,Description="This is a Constrained fitness fxn, with ability to show violations", viol_Type= None,Default_Weight =1):
         self.__viol_fxn= fxn
         self.viol_Type = viol_Type
         self.is_Hard = is_Hard
-        Fitness.__init__(self,self.__new_fxn__,Ns_problem,is_obj_fxn=is_obj_fxn)
+        Fitness.__init__(self,self.__new_fxn__,Ns_problem,is_obj_fxn=is_obj_fxn,Description=Description)
 
         name = str(fxn.__name__) + ' ' + str(Const_Fxn.count)
         Const_Fxn.all_const[name] = self
@@ -130,7 +130,7 @@ class Fitness_Fxn(Fitness):
         if kg_sum:
             return summ/kg_sum
 
-    def __init__(self, NS_problem,const_fxns =Const_Fxn.all_const, weights=Const_Fxn.all_weight):
+    def __init__(self, NS_problem,Description="This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns",const_fxns =Const_Fxn.all_const, weights=Const_Fxn.all_weight):
         self.Const = const_fxns
         self.weights = weights
-        Fitness.__init__(self,self.__fit_fxn__,NS_problem)
+        Fitness.__init__(self,self.__fit_fxn__,NS_problem,is_obj_fxn = False,Description=Description)

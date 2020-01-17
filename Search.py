@@ -237,7 +237,7 @@ class Search(part_Holder,ab_Search):
         Triggers the On_new_best event
         ==priv=inh==
         '''
-        self.particles['g_best @ ite: %d Obj_fxn: %.3f'%(self.ite,fg)] = g
+        self.particles['g_best @ ite: %d Obj_fxn: %.4f'%(self.ite,fg)] = g
         self.g = g
         self.fg = fg
         if self.on_new_best:

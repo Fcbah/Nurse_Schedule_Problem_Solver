@@ -133,18 +133,30 @@ class NSP(part_Holder):
         '''
         return True if self.get_no_of_days()==14 and self.get_nurses_no()==10 and self.get_experienced_nurses_no()==4 and self.get_max_night_per_nurse()==3/14 and self.get_preferences()==(4,2,2,2) and self.get_min_experienced_nurse_per_wshift()==1 and self.get_min_night_per_nurse()==3/14 else False
     
-    def get_all_particles(self):
+    def dep_get_all_particles(self):
         '''
+        DONT USE PLEASE
         Retrieve all particles both manual, current search or previous searches
+
         '''
         outp = self.particles
         if self.curr_search:
-            outp += self.curr_search.get_particles()
+            outp.update(self.curr_search.get_particles())
         if self.prev_searches:
             for sech in self.prev_searches:
-                outp += sech.get_particles()
+                outp.update(sech.get_particles())
         return outp
-    def get_all_constraints(self):
+    
+    def get_all_part_holder(self):
+        '''
+        Returns all particle holders whether search or nsp as dictionary
+        '''
+        n = self.prev_searches.copy()
+        n[self.self_name] = self
+        if self.curr_search:
+            n[self.curr_search_name] = self.curr_search
+    
+    def get_all_constraint_fxn_obj(self):
         '''
         returns a dictionary
         Retrieve all Fitness constraints object associated with this nurse schedule problem
@@ -152,22 +164,22 @@ class NSP(part_Holder):
         mm = self.hard_con_dict.copy()
         mm.update(self.soft_con_dict)
         return mm
+    
     def get_all_fitness(self):
         '''
         Retrieve all Fitness object associated with this nurse schedule problem
         '''
-        outp = self.get_all_constraints()        
-        outp['f_fx__default'] = self.fitt
+        outp = self.man_fitt.copy()
+        outp.update(self.prev_searches)
+        outp.update(self.get_all_constraints()) #uneditable starts with H and C        
+
+        outp[self.self_name] = self.fitt
         
         if self.curr_search:
-            outp['f_fx__curr_search'] = self.curr_search.fitt
+            outp[self.curr_search_name] = self.curr_search.fitt       
         
-        if self.prev_searches:
-            for k,sech in enumerate(self.prev_searches):
-                outp['f_fx_prev_search_%d'%k]=sech.fitt
-        if self.man_fitt:
-            outp += self.man_fitt
         return outp
+    
     def add_new_man_fit(self,fitness,name=''):
         '''
         This adds a new fitness object to the list of manual fitness fxns 
@@ -175,6 +187,7 @@ class NSP(part_Holder):
         '''
         if isinstance(fitness,Fit.Fitness):
             self.man_fitt['man_fit_%s_%d'%(name,len(self.man_fitt))]
+    
     def create_rand_particle(self):
         '''
         Returns a regenerated random particle in a numpy integer ndarray
@@ -191,21 +204,92 @@ class NSP(part_Holder):
 
         self.__nsp__ = dict(no_of_days=no_of_days,nurses_no=nurses_no,experienced_nurses_no=experienced_nurses_no)
         self.__arg_const__= dict(max_night_per_nurse=max_night_per_nurse,preference=preference,min_experienced_nurse_per_shift=min_experienced_nurse_per_shift,min_night_per_nurse=min_night_per_nurse)
-        
+
         #H2 and H3 are obj_fxn because the measure extent of violations in the -ve direction
-        self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0)#nd2
-        self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0)#nd2
+        self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0,
+        Description='''It is violation-showing fitness function that expresses one of the Hard Constraints H2.
+    CHECKS: If there is no nurse having a Morning Shift immediately after Night Shift. 
+    NORMALIZATION: The result is normalized in the -ve direction over all NURSES AND DAYS
+    ''')#nd2
+
+        self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0,
+        Description='''It is a violation-showing fitness function that expresses one of the Hard Constraints H3.
+    CHECKS: If there is the number of night shift every nurse have is not more than MAXIMUM.
+    MAXIMUM SET BY:  max_night_per_nurse - e.g. 3/14 means 3 night shifts per two weeks is the MAXIMUM
+    NORMALIZATION: The result is normalized in the -ve direction over all NURSES and DAYS
+    ''')#nd2
         
-        self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type=('N',),Default_Weight=4)#n
-        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type=('D',),Default_Weight=0)#d
-        self.C2A1= Fit.Const_Fxn(c.C2A1,self,viol_Type=('D',1,1,1,1), Default_Weight=0)#d1
-        self.C2B = Fit.Const_Fxn(c.C2B,self,viol_Type=('D',),Default_Weight=0)#d
-        self.C2B1 = Fit.Const_Fxn(c.C2B1,self,viol_Type=('D',1,1,1,1),Default_Weight=0)#d1
-        self.C3 = Fit.Const_Fxn(c.C3,self,viol_Type=('N',1,0,0,0),Default_Weight=1)#n1_O
-        self.C4 = Fit.Const_Fxn(c.C4,self,viol_Type=('D','E'),Default_Weight=1)#d
-        self.C4B = Fit.Const_Fxn(c.C4B,self,viol_Type=('D','E',0,1,1,1),Default_Weight=0)#d1_s
-        self.C5 = Fit.Const_Fxn(c.C5,self,viol_Type= (None,),Default_Weight=1)#nd2
-        self.C6 = Fit.Const_Fxn(c.C6,self,viol_Type=('N',0,0,0,1))#n1_n
+        self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type=('N',),Default_Weight=4,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C1.
+    CHECKS: If all nurses has a fair working shift schedule. i.e. How much absence of cheating among all nurses the particle(schedule) achieves.
+    NORMALIZATION: The result is normalized over all NURSES
+    ''')#n
+        
+        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type=('D',),Default_Weight=0,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C2.
+    CHECKS:By how much does the schedule (particle) achieves the Hospital's Minimum Preference i.e. On How many days in the schedule was this achieved
+    PREFERENCE SET BY: preference - e.g. (4,2,2,2) means MINIMUM of 4 nurses - OFF, 2 - MORNING, 2-EVENING, 2-NIGHT
+    EXTRA: Coarse_grained: checks if all shift type and offs on a day simulataneously satisfy their corresponding requirement.
+    NORMALIZATION: The result is normalized over all DAYS
+    ''')#d
+        
+        self.C2A1= Fit.Const_Fxn(c.C2A1,self,viol_Type=('D',1,1,1,1), Default_Weight=0,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C2.
+    CHECKS:By how much does the schedule (particle) achieves the Hospital's Minimum Preference i.e. On How many days in the schedule was this achieved
+    PREFERENCE SET BY: preference - e.g. (4,2,2,2) means MINIMUM of 4 nurses - OFF, 2 - MORNING, 2-EVENING, 2-NIGHT
+    EXTRA: Fine-Grained: Checks if each shift type on each day satisfy their corresponding requirement independently
+    NORMALIZATION: The result is normalized over all DAYS and their SHIFTS
+    ''')#d1
+        
+        self.C2B = Fit.Const_Fxn(c.C2B,self,viol_Type=('D',),Default_Weight=0,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C2.
+    CHECKS:By how much does the schedule (particle) achieves HALF OF the Hospital's Minimum Preference i.e. On How many days in the schedule was this achieved
+    PREFERENCE SET BY: preference - e.g. (4,2,2,2) means MINIMUM of 4 nurses - OFF, 2 - MORNING, 2-EVENING, 2-NIGHT
+    EXTRA: Coarse-grained: Checks if all shift type and offs on each day simultaneously satisfy HALF the requirement
+    NORMALIZATION: The result is normalized over all DAYS
+    ''')#d
+        
+        self.C2B1 = Fit.Const_Fxn(c.C2B1,self,viol_Type=('D',1,1,1,1),Default_Weight=0,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C2.
+    CHECKS:By how much does the schedule (particle) achieves HALF OF the Hospital's Minimum Preference i.e. On How many days in the schedule was this achieved
+    PREFERENCE SET BY: preference - e.g. (4,2,2,2) means MINIMUM of 4 nurses - OFF, 2 - MORNING, 2-EVENING, 2-NIGHT
+    EXTRA: Fine-Grained: Checks if each shift type on each day satisfty HALF the corresponding requirement independently
+    NORMALIZATION: The result is normalized over all DAYS and SHIFT
+    ''')#d1
+
+        self.C3 = Fit.Const_Fxn(c.C3,self,viol_Type=('N',1,0,0,0),Default_Weight=1,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C3.
+    CHECKS: If a nurse has a minimum of one OFF (all work and no rest is a violation) 
+    NORMALIZATION: The result is normalized over all NURSES
+    ''')#n1_O
+
+        self.C4 = Fit.Const_Fxn(c.C4,self,viol_Type=('D','E'),Default_Weight=1,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C4.
+    CHECKS: For how many working shift in this schedule do we have at least "MINIMUM" experienced nurses assigned
+    MINIMUM SET BY: min_experienced_nurse_per_shift e.g. =1 means at least one of the experienced nurses must be assigned to both M, E and N shift for each day to fulfil requirement
+    EXTRA: Only checks by day, any shift that has no experienced nurse, renders the day a violation
+    NORMALIZATION: The result is normalized over all DAYS
+    ''')#d
+        self.C4B = Fit.Const_Fxn(c.C4B,self,viol_Type=('D','E',0,1,1,1),Default_Weight=0,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C4.
+    CHECKS: For how many working shift in this schedule do we have at least "MINIMUM" experienced nurses assigned
+    MINIMUM SET BY: min_experienced_nurse_per_shift e.g. =1 means at least one of the experienced nurses must be assigned to each shift for that shift to fulfil requirement
+    EXTRA: fine-grained, each shift make independent contribution to the fitness fxn
+    NORMALIZATION: The result is normalized over all DAYS and their SHIFTS
+    ''')#d1_s
+        
+        self.C5 = Fit.Const_Fxn(c.C5,self,viol_Type= (None,),Default_Weight=1,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C5.
+    CHECKS: How many night shift in the schedule (particle) is immediately followed by an OFF 
+    NORMALIZATION: The result is normalized over all NIGHT SHIFT
+    ''')#nd2
+
+        self.C6 = Fit.Const_Fxn(c.C6,self,viol_Type=('N',0,0,0,1),Default_Weight=1,
+        Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C6.
+    CHECKS: If the night shifts in the schedule (particle) is greater than MINIMUM
+    MINIMUM SET BY: min_night_per_nurse: e.g =3/14 means that we have minimum of 3 nights per two weeks 
+    NORMALIZATION: The result is normalized over all NURSES
+    ''')#n1_n
         
         self.H23 = Fit.Fitness(c.cons,self,is_obj_fxn=True)
         self.hard_con_dict = dict(H2=self.H2,H3=self.H3)
@@ -215,6 +299,8 @@ class NSP(part_Holder):
 
         self.curr_search = None
         self.prev_searches= {}
+        self.curr_search_name = 'Curr_Search'
+        self.self_name = 'NSP_default'
 
         self.particles['Rand_First'] = self.create_rand_particle()
 

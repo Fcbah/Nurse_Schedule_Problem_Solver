@@ -844,7 +844,7 @@ if __name__ == "__main__":
     info2 = Listbox(info)
 
     #******************** START *************************************************
-    viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
+    viol = const_fxn_selector(info,list(r.get_all_constraint_fxn_obj().items()))
 
     p =r.particles.copy().popitem()[1]
     dis.set_particle(p)
