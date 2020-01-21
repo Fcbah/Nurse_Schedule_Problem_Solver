@@ -113,7 +113,7 @@ class progressbar(Frame):
 
         self.__cv.after(500,func=self.update)
 
-class CanvWrap(Frame):
+class particle_display(Frame):
     '''
     A class to wrap the Particle/Violation displaying Canvas
     
@@ -292,6 +292,8 @@ class CanvWrap(Frame):
     def set_violation(self,matrix,violation):
         '''
         ==ext==
+        This is used to set this widget's violation 
+        rom violation selector
         '''
         v_type = {1:'complete',2:'complete',5:'shift',6:'shift'} #side effect: (None,), noViol
         v_pple = {1:'all',2:'exp',5:'all',6:'exp'} #side effect: (None,), noViol
@@ -314,8 +316,7 @@ class CanvWrap(Frame):
         elif m=='nurses' or m=='days':
             self._set_viol_matrix(transform(matrix,violation))
         else:
-            raise ValueError('Something is wrong here in CanvWrap.set_violation()')
-    
+            raise ValueError('Something is wrong here in particle_display.set_violation()')    
     def get_particle(self):
         '''
         Returns the current particle on display in a 1D numpy array 
@@ -339,6 +340,8 @@ class CanvWrap(Frame):
     def stop_showing_violations(self):
         '''
         ==ext==
+        This is used to stop showing violations
+        to start again I just need to set violations again
         '''
         self._set_viol_category('none')
 
@@ -376,7 +379,7 @@ class CanvWrap(Frame):
         self._sub_dis = Frame(self)        
         self.scrollx = Scrollbar(self,orient=HORIZONTAL)
         self.scrolly = Scrollbar(self._sub_dis,orient=VERTICAL)
-        #gh = CanvWrap(sub_dis,r,scrx,scry)
+        #gh = particle_display(sub_dis,r,scrx,scry)
         self.canvas = Canvas(self._sub_dis)
 
         
@@ -509,7 +512,7 @@ class CanvWrap(Frame):
                 x,y=self._dim_rect[0]/2, self._dim_rect[1]/2
                 x1,y1= x1+x,y1+y
                 k = self.canvas.create_text(x1,y1,fill=self.colors['text'],font=self._text_font,tags=('d%d'%i,'n%d'%j,'text','part','all'))
-                self.canvas.itemconfigure(k,text=CanvWrap._conv(xx[i,j]))
+                self.canvas.itemconfigure(k,text=particle_display._conv(xx[i,j]))
 
         x1,y1 = self._get_loc(0,0)
         x2,y2 = self._get_loc(shp[0],shp[1])
@@ -690,7 +693,7 @@ class CanvWrap(Frame):
                     self.canvas.addtag_withtag('noViol',k)
                 
                 k = self._get_singl_item('text','d%d'%i,'n%d'%j,'part')
-                self.canvas.itemconfigure(k,text=CanvWrap._conv(xx[i,j]))
+                self.canvas.itemconfigure(k,text=particle_display._conv(xx[i,j]))
 
     def update_extD_side(self):
         #xx = self.extD_matrix.copy() #How do you now want to handle the C4 constraints this way, the data sets are completely different
@@ -796,7 +799,7 @@ class const_fxn_selector(Frame):
         return True if self.show_viol==self.TRUE else False
     def set_show_violation(self,value):
         '''
-        Set the show_violation button with a bool value
+        Set the show_violation button with a bool value externally
         '''
         if isinstance(value,bool):
             if value:
@@ -919,7 +922,7 @@ if __name__ == "__main__":
     bot = progressbar(master)
 
 
-    dis = CanvWrap(Top,r)
+    dis = particle_display(Top,r)
     info = Frame(Top)
 
     #viol = const_fxn_selector(info,list(r.get_all_constraints().items()))

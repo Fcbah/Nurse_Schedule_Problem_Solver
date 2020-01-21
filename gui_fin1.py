@@ -3,6 +3,7 @@ import tkinter.messagebox as p
 import numpy as np
 import Prob
 import r_gui as re
+import gui_small_class as gg
 
 class window(Frame):
     def __init__(self,master=None):
@@ -13,25 +14,58 @@ class window(Frame):
 
     def prob_configure(self):
         self.prob_conf.pack_forget()
-        arg_dict = dict(no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse=3/14,preference=(4,2,2,2),min_experienced_nurse_per_shift=1,min_night_per_nurse=3/14)
+        arg_dict = dict(no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse='3/14',preference='4,2,2,2',min_experienced_nurse_per_shift=1,min_night_per_nurse='3/14')
+        arg_err  = dict(no_of_days=int,nurses_no=int,experienced_nurses_no=int,max_night_per_nurse=float,preference=(tuple,int),min_experienced_nurse_per_shift=int,min_night_per_nurse=float)
         
-        #self.ans = 
+        w = get_dict(a,arg_dict,arg_err)
+        arg_dict = w.result
 
         r = Prob.NSP(**arg_dict)
         
+        self.top = Top(self,r)
+        self.top.pack(side=TOP,expand=YES,fill=BOTH)
 
-        dis = re.CanvWrap(self,r)
+        dis = self.top.disp
         p =r.particles.copy().popitem()[1]
         dis.set_particle(p)
         dis.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
         dis.create_screen()
-        dis.pack(side=TOP,expand=YES,fill=BOTH)
+        #dis.pack(side=TOP,expand=YES,fill=BOTH)
 
         pass
 
+class Top(Frame):
+    def __init__(self,master,nsp):
+        if not isinstance(nsp,Prob.NSP):
+            raise TypeError('"nsp"must be of type Prob.NSP')
+        Frame.__init__(self,master)
+        
+        self.disp = re.particle_display(self,nsp)
+        self.nsp = nsp
+        self.left = Left(self,nsp)
+        
+        self.left.pack(side=LEFT,expand=NO,fill=Y)
+        self.disp.pack(side=RIGHT,expand=YES,fill=BOTH)
+
+        self.set1 = gg.part_disp_set_viol(self.disp,self.left.viol_select,nsp)
+        self.left.viol_select.bind(self.left.viol_select.selection_changed,self.set1)
+
+        self.set2 = gg.part_disp_set_viol(self.disp,self.left.viol_select,nsp)
+        self.left.viol_select.bind(self.left.viol_select.show_viol_changed,self.set1)
 
 
+class Left(Frame):
+    def __init__(self,master,nsp):
+        if isinstance(nsp,Prob.NSP):
+            self.nsp = nsp
+        Frame.__init__(self,master)
+        self.part_select = Listbox()
+        self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
+        self.fit_view =Listbox()
 
+        self.part_select.pack(side=TOP,expand=NO,fill=X)
+        self.viol_select.pack(side=TOP, expand=NO,fill=X)
+        self.fit_view.pack(side=BOTTOM, expand=YES, fill=X)
 class MyDialog(Toplevel):
     '''
     Learnt From
@@ -125,8 +159,9 @@ class MyDialog(Toplevel):
         pass
 
 class get_dict(MyDialog):
-    def __init__(self,parent,defaut=dict()):
+    def __init__(self,parent,defaut=dict(),types=dict()):
         self.defaut = defaut
+        self.types = types
         self.storing ={}
         self.stori={}
         MyDialog.__init__(self,parent,"Parameters for the Nursing Schedule Problem")
@@ -145,16 +180,16 @@ class get_dict(MyDialog):
     def validate(self):
         
         for item,value in self.stori.items():
-            frm = 'float'
+            frm = self.types[item]
             try:
-                if item == 'preference':
-                    frm = 'integer'
+                if type(frm)==tuple:
+                    frm = frm[1]
                     iu = ()
                     for x in value.get().split(sep=',',):
-                        iu = iu + (int(x),)
+                        iu = iu + (frm(x),)
                     self.storing[item] = iu
                 else:
-                    self.storing[item]=float(eval(value.get()))                
+                    self.storing[item]=frm(eval(value.get()))         
             except ValueError as qi:
                 p.showerror('Invalid input','"%s" must be in "%s" format'%(item,frm))
                 return 0
@@ -164,11 +199,11 @@ class get_dict(MyDialog):
         self.result = self.storing
 
 a = Tk()
-#w = window(a)
-#w.pack(side=LEFT,expand=YES,fill=BOTH)
-#a.mainloop()
+w = window(a)
+w.pack(side=LEFT,expand=YES,fill=BOTH)
+a.mainloop()
 
-arg_dict = dict(no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse='3/14',preference='4,2,2,2',min_experienced_nurse_per_shift=1,min_night_per_nurse='3/14')
+#arg_dict = dict(no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse='3/14',preference='4,2,2,2',min_experienced_nurse_per_shift=1,min_night_per_nurse='3/14')
 
-w = get_dict(a,arg_dict)
-print(w.result)
+#w = get_dict(a,arg_dict)
+#print(w.result)
