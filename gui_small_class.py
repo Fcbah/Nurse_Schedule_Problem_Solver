@@ -22,3 +22,5 @@ class part_disp_set_viol:
             self.part_disp.set_violation(selec.viol_fxn(x,*self.nsp.get_fitness_args()),selec.viol_Type)
         else:
             self.part_disp.stop_showing_violations()
+
+        self.part_disp.create_screen()

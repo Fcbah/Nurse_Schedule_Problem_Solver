@@ -821,7 +821,9 @@ class const_fxn_selector(Frame):
         if  k != self.prev_sel:
             if k :
                 self.prev_sel = k
-                self.prev_sel1=self.prev_sel[0]                
+                self.prev_sel1=self.prev_sel[0]
+                self.describe.delete('1.0',END)
+                self.describe.insert(END,'%s'%self.get_selected_const_fxn().description)                
                 self.event_generate(self.selection_changed)
             else:
                 self.prev_sel = k
@@ -864,8 +866,14 @@ class const_fxn_selector(Frame):
         self.scrolly.pack(side=RIGHT,expand=NO,fill=Y)
         
         self.rad_show_viol = Checkbutton(self,text='Show Violation?',variable=self.showViolation,indicatoron=False)
+
+        self.describe = Text(self,wrap=WORD)
+        self.describe.insert(END,'Never Set abi you no see for your self, This is so stupid I am getting')
         self.rad_show_viol.pack(side=TOP,expand=NO,fill=X)
-        self.__wrap.pack(side=BOTTOM,expand=YES,fill=BOTH)
+        self.__wrap.pack(side=TOP,expand=YES,fill=BOTH)
+        self.describe.configure(width=self.__wrap.winfo_width())
+        self.describe.pack(side=TOP,expand=NO,fill=BOTH)
+        
         
         self.selection_changed = '<<selection_changed>>'
         self.show_viol_changed = '<<show_violation_changed>>'
@@ -881,8 +889,12 @@ class const_fxn_selector(Frame):
             self.prev_sel = (0,)
             self.prev_sel1 = 0  #last useful prev_sel1
             self.list_w.selection_set(self.prev_sel1)
-
+            
             self.show_viol = self.TRUE #previously selected show violation
+
+            self.describe.delete('1.0',END)
+            self.describe.insert(END,'%s'%self.get_selected_const_fxn().description)
+
         
         self.showViolation.set(self.show_viol)
 

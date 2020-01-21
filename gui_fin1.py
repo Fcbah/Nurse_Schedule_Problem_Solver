@@ -59,13 +59,14 @@ class Left(Frame):
         if isinstance(nsp,Prob.NSP):
             self.nsp = nsp
         Frame.__init__(self,master)
-        self.part_select = Listbox()
+        
+        self.part_select = Listbox(self)
         self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
-        self.fit_view =Listbox()
+        self.fit_view =Listbox(self)
 
-        self.part_select.pack(side=TOP,expand=NO,fill=X)
-        self.viol_select.pack(side=TOP, expand=NO,fill=X)
-        self.fit_view.pack(side=BOTTOM, expand=YES, fill=X)
+        self.part_select.pack(side=TOP,expand=YES,fill=BOTH)
+        self.viol_select.pack(side=TOP, expand=YES,fill=BOTH)
+        self.fit_view.pack(side=BOTTOM, expand=YES, fill=BOTH)
 class MyDialog(Toplevel):
     '''
     Learnt From
