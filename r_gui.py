@@ -152,6 +152,42 @@ class CanvWrap(Frame):
         + j = Column of the cell
         '''
         return self._dim_init[0] + self._dim_rect[0]*j,self._dim_init[1] + self._dim_rect[1]*i
+    
+    def _get_loc_init(self,i=0,j=0,size=False,row=None):
+        '''
+        i = Row index
+        j= Column index
+        size = to tell if you want size or location
+        row = To be set when getting the core, to indicate if it is a row entry or column entry
+        '''
+        cz=self._get_nsp_shape(False)
+        N_no =cz[1]
+        D_no = cz[0]
+        x = self._dim_init[0]/2
+        y= self._dim_init[1] /2
+        xx = self._dim_rect[0]
+        yy= self._dim_rect[1]
+
+        if i and j:
+            if row:
+                if size: return xx,y 
+                else: return x*2 + xx*(j-1),y
+            elif row == False:
+                if size: return x,yy 
+                else: return x,y*2 +yy*(i-1)
+            else:
+                #return x,y if size else x*j, y*i
+                raise ValueError('row must be set here, it cant remain at default value')
+        elif i:
+            if size:return x,(D_no+4)*yy 
+            else: return 0,y*2
+        elif j:
+            if size:return (N_no+4)*xx,y 
+            else: return x*2,1 
+        else:
+            if size: return x*2,y*2
+            else:return 0,1
+
     def _get_nsp_shape(self,row_nurse=True):
         '''
         Returns the tuple representing the numpy shape of the problem's typical particle.
@@ -323,7 +359,7 @@ class CanvWrap(Frame):
             self.wipe_all_screen()
         else:
             self.__started = True
-
+        self.create_init_side()
         self.create_part_side()
         self.create_extD_side()
         self.create_extN_side()
@@ -345,7 +381,7 @@ class CanvWrap(Frame):
 
         
         self._dim_rect =(30,30)
-        self._dim_init =(60,60)
+        self._dim_init =(70,70)
         self._oval_pad = 2
         self._oval_lin_width = 2
         self._long_rect_corner_rad = 5
@@ -389,6 +425,53 @@ class CanvWrap(Frame):
         ==ext==
         '''
         self.canvas.delete('all')
+    
+    def create_init_side(self):
+        x,y = self._get_loc_init()
+        ax,ay=self._get_loc_init(size=True)
+        self.canvas.create_rectangle(x,y,x+ax,y+ay,tags=('all','init'))       
+
+        x,y = self._get_loc_init(1,0)
+        ax,ay=self._get_loc_init(1,0,size=True)
+        self.canvas.create_rectangle(x,y,x+ax,y+ay,tags=('all','init'))
+       
+        txt = 'Days'
+        ay-= len(txt)/2*self._dim_rect[1]
+        for t in txt:
+            self.canvas.create_text(x+ax/2,y+ay/2,text='%s'%t,font=self._text_font,tags=('init','all'))
+            ay += self._dim_rect[1]
+        
+        x,y = self._get_loc_init(0,1)
+        ax,ay=self._get_loc_init(0,1,size=True)
+        self.canvas.create_rectangle(x,y,x+ax,y+ay,tags=('all','init'))
+        self.canvas.create_text(x+ax/2,y+ay/2,text='Nurses',font=self._text_font,tags=('init','all'))       
+        
+        shp  = self._get_nsp_shape()
+        wert = ('O','M','E','N')
+
+        for i in range (1,shp[1]+1):
+            x,y = self._get_loc_init(i,1,row=False)
+            ax,ay=self._get_loc_init(i,1,size=True,row=False)
+            self.canvas.create_rectangle(x,y,x+ax,y+ay,tags=('all','init'))
+            self.canvas.create_text(x+ax/2,y+ay/2,text='D%d'%i,font=self._text_font,tags=('init','all'))
+        
+        for i in range (shp[1]+1,shp[1]+5):
+            x,y = self._get_loc_init(i,1,row=False)
+            ax,ay=self._get_loc_init(i,1,size=True,row=False)
+            self.canvas.create_rectangle(x,y,x+ax,y+ay,tags=('all','init'))
+            self.canvas.create_text(x+ax/2,y+ay/2,text='%s'%wert[i-shp[1]-1],font=self._text_font,tags=('init','all'))
+        
+        for j in range (1,shp[0]+1):
+            x,y = self._get_loc_init(1,j,row=True)
+            ax,ay=self._get_loc_init(1,j,size=True,row=True)
+            self.canvas.create_rectangle(x,y,x+ax,y+ay,tags=('all','init'))
+            self.canvas.create_text(x+ax/2,y+ay/2,text='N%d'%j,font=self._text_font,tags=('init','all'))
+
+        for j in range (shp[0]+1,shp[0]+5):
+            x,y = self._get_loc_init(1,j,row=True)
+            ax,ay=self._get_loc_init(1,j,size=True,row=True)
+            self.canvas.create_rectangle(x,y,x+ax,y+ay,tags=('all','init'))
+            self.canvas.create_text(x+ax/2,y+ay/2,text='%s'%wert[j-shp[0]-1],font=self._text_font,tags=('init','all'))
 
     def create_part_side(self):
         shp = self._get_nsp_shape()
