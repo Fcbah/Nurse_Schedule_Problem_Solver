@@ -12,27 +12,26 @@ class window(Frame):
         self.prob_conf.pack(side=LEFT,expand=NO)
         self.isconfig=False
 
-    def prob_configure(self):
-        self.prob_conf.pack_forget()
+    def prob_configure(self):        
         arg_dict = dict(no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse='3/14',preference='4,2,2,2',min_experienced_nurse_per_shift=1,min_night_per_nurse='3/14')
         arg_err  = dict(no_of_days=int,nurses_no=int,experienced_nurses_no=int,max_night_per_nurse=float,preference=(tuple,int),min_experienced_nurse_per_shift=int,min_night_per_nurse=float)
-        
-        w = get_dict(a,arg_dict,arg_err)
+        arg_descrp = dict(no_of_days='This is the number of days the schedule is expected to cover (int)',nurses_no='This is the total number of nurses in the hospital (int)',experienced_nurses_no='This is the number of experienced nurses in the hospital. It must be less than "nurses_no" (int)',max_night_per_nurse='This sets the maximum number of night shifts each nurses could be given. It is a hard constraint. It must be expressed as e.g. 3/14 which implies a maximum of 3 night shift in 2 weeks (14 days).(float)',preference='This is the minimum preference for each day. e.g. "4,2,2,2" will mean a minimum of 4 nurses on OFF, 2 on MORNING, 2 on EVENING and 2 on NIGHT shifts must be met for each of the schedule days - (tuple, ints)',min_experienced_nurse_per_shift='This sets the minimum number of experienced nurses that should be available for each of the "WORKING" shifts which are the Morning(M), Evening (E) and Night(N) shifts',min_night_per_nurse='This sets the minimum number of night shifts expected to be allocated to each of the nurses')
+        w = get_dict(a,arg_dict,arg_err,arg_descrp)
         arg_dict = w.result
-
-        r = Prob.NSP(**arg_dict)
         
-        self.top = Top(self,r)
-        self.top.pack(side=TOP,expand=YES,fill=BOTH)
+        if arg_dict:
+            self.prob_conf.pack_forget()            
+            r = Prob.NSP(**arg_dict)
+            
+            self.top = Top(self,r)
+            self.top.pack(side=TOP,expand=YES,fill=BOTH)
 
-        dis = self.top.disp
-        p =r.particles.copy().popitem()[1]
-        dis.set_particle(p)
-        dis.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
-        dis.create_screen()
-        #dis.pack(side=TOP,expand=YES,fill=BOTH)
-
-        pass
+            dis = self.top.disp
+            p =r.particles.copy().popitem()[1]
+            dis.set_particle(p)
+            dis.set_violation(r.H3.viol_fxn(p,*r.get_fitness_args()),r.H3.viol_Type)
+            dis.create_screen()
+            #dis.pack(side=TOP,expand=YES,fill=BOTH)
 
 class Top(Frame):
     def __init__(self,master,nsp):
@@ -66,7 +65,7 @@ class Left(Frame):
         
         self.part_select = Listbox(self)
         self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
-        self.fit_view =Listbox(self)
+        self.fit_view = re.fit_viewer(self,nsp)
 
         #packing
 
@@ -167,8 +166,9 @@ class MyDialog(Toplevel):
         pass
 
 class get_dict(MyDialog):
-    def __init__(self,parent,defaut=dict(),types=dict()):
+    def __init__(self,parent,defaut=dict(),types=dict(),description=dict()):
         self.defaut = defaut
+        self.description= description
         self.types = types
         self.storing ={}
         self.stori={}
@@ -178,9 +178,12 @@ class get_dict(MyDialog):
     def body(self,master):
         k={}
         for i,(item,value) in enumerate(self.defaut.items()):
-            Label(master,text = item).grid(row=i,column=0)
+            f =Label(master,text = item)
+            f.grid(row=i,column=0)
             l = StringVar()
-            l.set(value)        
+            l.set(value)
+            if self.description:
+                gg.CreateToolTip(f,self.description[item],wait_time=10)
             Entry(master,textvariable=l).grid(row=i,column=1)
             k[item]= l
         self.stori = k

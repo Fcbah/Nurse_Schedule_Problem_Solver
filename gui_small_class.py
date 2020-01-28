@@ -36,8 +36,8 @@ class CreateToolTip(object):
         self.wraplength = wraplength
     def set_text(self,text):
         self.text =text
-    def __init__(self,widget,text='widget info',click_toggle_mode=False):
-        self.waittime = 500
+    def __init__(self,widget,text='widget info',click_toggle_mode=False,wait_time=180):
+        self.waittime = wait_time
         self.wraplength = 180
         self.widget = widget
         self.text= text
