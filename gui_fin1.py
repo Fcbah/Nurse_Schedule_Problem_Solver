@@ -44,8 +44,12 @@ class Top(Frame):
         self.nsp = nsp
         self.left = Left(self,nsp)
         
+        #packing
+
         self.left.pack(side=LEFT,expand=NO,fill=Y)
         self.disp.pack(side=RIGHT,expand=YES,fill=BOTH)
+
+        #binding
 
         self.set1 = gg.part_disp_set_viol(self.disp,self.left.viol_select,nsp)
         self.left.viol_select.bind(self.left.viol_select.selection_changed,self.set1)
@@ -64,9 +68,12 @@ class Left(Frame):
         self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
         self.fit_view =Listbox(self)
 
+        #packing
+
         self.part_select.pack(side=TOP,expand=YES,fill=BOTH)
         self.viol_select.pack(side=TOP, expand=YES,fill=BOTH)
         self.fit_view.pack(side=BOTTOM, expand=YES, fill=BOTH)
+
 class MyDialog(Toplevel):
     '''
     Learnt From
@@ -200,6 +207,7 @@ class get_dict(MyDialog):
         self.result = self.storing
 
 a = Tk()
+a.wm_title('Nursing Schedule Problem')
 w = window(a)
 w.pack(side=LEFT,expand=YES,fill=BOTH)
 a.mainloop()

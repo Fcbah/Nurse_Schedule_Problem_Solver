@@ -2,6 +2,8 @@ from tkinter import *
 import Prob
 import Search
 import numpy as np
+import gui_small_class as gsp
+
 
 def getspline(x1,y1,x2,y2,r):
     '''
@@ -810,7 +812,7 @@ class const_fxn_selector(Frame):
                 self.show_viol = 0 #it will be set in check_sel and list will be disabled
                 self.showViolation.set(self.show_viol)
                 self.list_w.configure(state = DISABLED)
-        self.check_sel_change()
+        #self.check_sel_change()
     def check_sel_change(self):
         '''
         ==priv==
@@ -866,15 +868,20 @@ class const_fxn_selector(Frame):
         self.scrolly.pack(side=RIGHT,expand=NO,fill=Y)
         
         self.rad_show_viol = Checkbutton(self,text='Show Violation?',variable=self.showViolation,indicatoron=False)
-
-        self.describe = Text(self,wrap=WORD)
+        
+        we = Frame(self)
+        we_scroll = Scrollbar(we,orient=VERTICAL)
+        self.describe = Text(we,wrap=WORD,yscrollcommand=we_scroll.set)
+        
         self.describe.insert(END,'Never Set abi you no see for your self, This is so stupid I am getting')
         self.rad_show_viol.pack(side=TOP,expand=NO,fill=X)
-        self.__wrap.pack(side=TOP,expand=YES,fill=BOTH)
-        self.describe.configure(width=self.__wrap.winfo_width())
-        self.describe.pack(side=TOP,expand=NO,fill=BOTH)
+        self.__wrap.pack(side=TOP,expand=NO,fill=BOTH)
+        #self.describe.configure(width=self.__wrap.winfo_width(),height=self.__wrap.winfo_height())
         
-        
+        we_scroll.configure(command=self.describe.yview)
+        we_scroll.pack(side=RIGHT,expand=NO,fill=Y)
+        we.pack(side=TOP,expand=NO,fill=X)
+                
         self.selection_changed = '<<selection_changed>>'
         self.show_viol_changed = '<<show_violation_changed>>'
         #self.event_add(self.selection_changed,'<Destroy>')
@@ -897,8 +904,150 @@ class const_fxn_selector(Frame):
 
         
         self.showViolation.set(self.show_viol)
+        self.describe.configure(width=self.__wrap.winfo_width(),height=12)
+        self.describe.pack(side=LEFT,expand=YES,fill=X)
 
         self.list_w.after(500,self.check_sel_change)
+
+class fit_viewer(Frame):
+    def get_selected_fit_fxn(self):
+        '''
+        Returns the selected "Violation_fxn" object If None then show_viol is set False
+        '''
+        return self.list_it[self.prev_sel1]
+
+    def set_sel_particle(self,particle):
+        '''
+        ==ext==
+        to notify and update my selected particle
+        '''
+        self.selected_particle = particle
+
+    def reset_fitness_lst(self):
+        '''
+        ==ext==
+        to notify for fitness list update
+        '''
+        #update list
+        #set list selected fitness
+        self.refill_list(self.nsp.get_all_fitness().items())
+        self.list_w.selection_clear()
+        self.list_w.selection_set(0)
+        #tooltip wil be adjusted automatically
+        self.event_generate(self.lst_reset)
+
+    def get_fit_fxn_dict(self):
+        '''
+        Returns a dictionary not a list
+        ==ext==
+        For menubar to be able to synchronize the fitness list and to be able to have the same indexing
+        '''
+        return  self.currfit_lst
+
+    def ext_set_sel_fit_fxn(self,index):
+        '''
+        ==ext==
+        For user to be able to set selected fit fxn for view in the menubar
+        '''
+        try:
+            self.list_it[index]
+        except:
+            pass
+        else:
+            self.list_w.selection_clear()
+            self.list_w.selection_set(index)
+            # check sel will fish it out self.prev_sel1 = index
+
+    def check_sel_change(self):
+        k = self.list_w.curselection()
+        if  k != self.prev_sel:
+            if k :
+                self.prev_sel = k
+                self.prev_sel1=self.prev_sel[0]
+                self.on_sel_change()
+            else:
+                self.prev_sel = k
+        self.after(500,self.check_sel_change)
+
+    def on_sel_change(self):
+        self.tooltip.set_text(self.get_selected_fit_fxn().description)
+        self.draw_canvas()
+    
+    def get_fit(self):
+        return self.get_selected_fit_fxn().check_fit(self.selected_particle,*self.args)
+    def get_obj(self):
+        return self.get_selected_fit_fxn().obj_fxn(self.selected_particle,*self.args)
+
+    def refill_list(self,fitnesses):
+        self.list_it = []
+        self.list_w.delete(0,END)
+        self.currfit = fitnesses
+        for ky, val in fitnesses:
+            self.list_it.append(val)
+            self.list_w.insert(END,ky)
+
+        self.currfit_lst = fitnesses
+    
+    def draw_canvas(self):
+        self.clear_canvas()
+        x_len = 70
+        y_len = 30
+        font = ('Times New Roman',12,'bold')
+        a00 = 1,1,1+x_len,1 + y_len
+        a10=1,1+y_len,1 +x_len,1+ 2*y_len
+        a01 = 1+x_len,1,1+2*x_len,1+ y_len
+        a11 = 1+x_len,1+y_len,1+2*x_len,1+2*y_len
+        self.canv.create_rectangle(*a00,tags=('all','rect'))
+        self.canv.create_rectangle(*a10,fill='green',tags=('all','rect'))
+        self.canv.create_rectangle(*a01,tags=('all','rect'))
+        self.canv.create_rectangle(*a11,fill='red',tags=('all','rect'))
+
+        self.canv.create_text(a00[0] +x_len/2, a00[1]+y_len/2,text='Fitness',tags=('all','text'))
+        self.canv.create_text(a01[0] +x_len/2, a01[1] + y_len/2,text='Objective',tags=('all','text'))
+
+        self.canv.create_text(a10[0]+x_len/2, a10[1]+y_len/2,font = font,text='%.2f'%self.get_fit(),fill='white',tags=('all','text'))
+        self.canv.create_text(a11[0]+x_len/2, a11[1]+y_len/2,font = font,text='%.2f'%self.get_obj(),fill='white',tags=('all','text'))
+
+    def clear_canvas(self):
+        self.canv.delete('all')
+
+    def __init__(self,master,nsp):
+        Frame.__init__(self,master)
+        if isinstance(nsp,Prob.NSP):
+            ks = nsp
+        self.args = nsp.get_fitness_args()
+
+        Label(self,text='Fitness Viewer',bg='blue',fg='white').pack(side=TOP,expand=NO,fill=X,pady=5)
+        self.descrip_btn = Button(self,text='Show Description')
+        self.tooltip = gsp.CreateToolTip(self.descrip_btn,'This is the Fitness Description viewer')
+        self.descrip_btn.pack(side=TOP,expand=NO,fill=X)
+        self.__wrap = Frame(self)        
+        self.list_w=Listbox(self.__wrap)
+        self.scrolly= Scrollbar(self.__wrap,command=self.list_w.yview)
+        self.list_w.configure(yscrollcommand=self.scrolly.set)
+        self.list_w.pack(side=LEFT,expand=NO,fill=Y)
+        self.scrolly.pack(side=RIGHT,expand=NO,fill=Y)
+
+        self.canv = Canvas(self)        
+        self.__wrap.pack(side=TOP,expand=NO,fill=X)        
+        self.canv.configure(width=self.__wrap.winfo_width(),height=70)
+        self.canv.pack(side=TOP,expand=YES,fill=X)
+        
+        self.nsp=ks
+
+        self.selected_particle = tuple(ks.particles.copy().popitem())[1]
+        self.list_it = []
+        
+        self.refill_list(ks.get_all_fitness().items())
+
+        self.prev_sel = (0,)
+        self.prev_sel1 = 0  #last useful prev_sel1
+        self.list_w.selection_set(self.prev_sel1)
+        self.on_sel_change()
+
+        self.lst_reset = '<<fit_fxn_list_reset>>'
+
+        self.after(500,self.check_sel_change)        
     
 class applyconst:
     '''
@@ -939,7 +1088,7 @@ if __name__ == "__main__":
 
     #viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
     info1 = Listbox(info)
-    info2 = Listbox(info)
+    info2 = fit_viewer(info,r)
 
     #******************** START *************************************************
     viol = const_fxn_selector(info,list(r.get_all_constraint_fxn_obj().items()))

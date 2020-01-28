@@ -167,17 +167,25 @@ class NSP(part_Holder):
     
     def get_all_fitness(self):
         '''
+        Returns a dictionary (name ,fitness obj)
+        needed by fitness viewer
         Retrieve all Fitness object associated with this nurse schedule problem
         '''
-        outp = self.man_fitt.copy()
-        outp.update(self.prev_searches)
-        outp.update(self.get_all_constraints()) #uneditable starts with H and C        
+        outp = {}
+        for ky,val in self.man_fitt.items():
+            outp['M %s'%ky] =val.fitt
 
-        outp[self.self_name] = self.fitt
+        for ky,val in self.prev_searches.items():
+            outp['P %s'%ky] = val.fitt
+        
+        outp['D %s'%self.self_name] = self.fitt
         
         if self.curr_search:
-            outp[self.curr_search_name] = self.curr_search.fitt       
+            outp['D %s'%self.curr_search_name] = self.curr_search.fitt       
         
+        for ky,val in self.get_all_constraint_fxn_obj().items():
+            outp['C %s'%ky] = val #uneditable starts with H and C        
+
         return outp
     
     def add_new_man_fit(self,fitness,name=''):
@@ -186,14 +194,27 @@ class NSP(part_Holder):
         using the specified name - To make avalaible in list of fitness objects
         '''
         if isinstance(fitness,Fit.Fitness):
-            self.man_fitt['man_fit_%s_%d'%(name,len(self.man_fitt))]
+            if name:
+                ctt = 1
+                nm =name
+                while True:
+                    try:
+                        tete = self.man_fitt[nm]
+                    except KeyError:
+                        break
+                    nm = '%s %d'%(name,ctt)
+                    ctt+=1
+                self.man_fitt[nm] = fitness
+            else:
+                self.man_fitt['Unamed Fitness %d'%len(self.man_fitt)] = fitness
     
     def create_rand_particle(self):
         '''
         Returns a regenerated random particle in a numpy integer ndarray
         '''
         y = np.random.randint(0,4,self.get_vect_len())
-        return gen_algo.regenerat(y,self.get_fitness_args(),self.get_Hard_Viol_fxns())
+        #return gen_algo.regenerat(y,self.get_fitness_args(),self.get_Hard_Viol_fxns())
+        return y
 
     def __init__(self,no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse=3/14,preference=(4,2,2,2),min_experienced_nurse_per_shift=1,min_night_per_nurse=3/14):
         '''
@@ -214,7 +235,7 @@ class NSP(part_Holder):
 
         self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0,
         Description='''It is a violation-showing fitness function that expresses one of the Hard Constraints H3.
-    CHECKS: If there is the number of night shift every nurse have is not more than MAXIMUM.
+    CHECKS: If the number of night shift every nurse have is not more than MAXIMUM.
     MAXIMUM SET BY:  max_night_per_nurse - e.g. 3/14 means 3 night shifts per two weeks is the MAXIMUM
     NORMALIZATION: The result is normalized in the -ve direction over all NURSES and DAYS
     ''')#nd2
@@ -263,14 +284,14 @@ class NSP(part_Holder):
     NORMALIZATION: The result is normalized over all NURSES
     ''')#n1_O
 
-        self.C4 = Fit.Const_Fxn(c.C4,self,viol_Type=('D','E'),Default_Weight=1,
+        self.C4 = Fit.Const_Fxn(c.C4,self,viol_Type=('D','E'),Default_Weight=0,
         Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C4.
     CHECKS: For how many working shift in this schedule do we have at least "MINIMUM" experienced nurses assigned
     MINIMUM SET BY: min_experienced_nurse_per_shift e.g. =1 means at least one of the experienced nurses must be assigned to both M, E and N shift for each day to fulfil requirement
     EXTRA: Only checks by day, any shift that has no experienced nurse, renders the day a violation
     NORMALIZATION: The result is normalized over all DAYS
     ''')#d
-        self.C4B = Fit.Const_Fxn(c.C4B,self,viol_Type=('D','E',0,1,1,1),Default_Weight=0,
+        self.C4B = Fit.Const_Fxn(c.C4B,self,viol_Type=('D','E',0,1,1,1),Default_Weight=1,
         Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C4.
     CHECKS: For how many working shift in this schedule do we have at least "MINIMUM" experienced nurses assigned
     MINIMUM SET BY: min_experienced_nurse_per_shift e.g. =1 means at least one of the experienced nurses must be assigned to each shift for that shift to fulfil requirement
@@ -297,12 +318,16 @@ class NSP(part_Holder):
                 
         part_Holder.__init__(self,Fitness=Fit.Fitness_Fxn(self))
 
+        self.fitt.description += '\n   This is the Fitness function suspected to be used by the author of the article "Solving complex NSP using PSO"'
+
         self.curr_search = None
         self.prev_searches= {}
         self.curr_search_name = 'Curr_Search'
         self.self_name = 'NSP_default'
 
-        self.particles['Rand_First'] = self.create_rand_particle()
+        self.particles['Random_Particle 1'] = self.create_rand_particle()
+        self.particles['Random_Particle 2'] = self.create_rand_particle()
+        self.particles['Random_Particle 3'] = self.create_rand_particle()
 
         if self.is_default():
             self.particles['The Best'] = np.array([2,1,1,0,0,3,0,3,0,1,3,2,0,2,
