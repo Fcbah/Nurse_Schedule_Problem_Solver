@@ -63,9 +63,9 @@ class CreateToolTip(object):
 
     def resolve(self,event=None):
         if self.on:
-            self.hidetip()
-            self.on = False
+            self.leave()
         else:
+            self.unschedule()
             self.showtip()
     
     def schedule(self):
