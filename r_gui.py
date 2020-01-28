@@ -1019,7 +1019,7 @@ class fit_viewer(Frame):
 
         Label(self,text='Fitness Viewer',bg='blue',fg='white').pack(side=TOP,expand=NO,fill=X,pady=5)
         self.descrip_btn = Button(self,text='Show Description')
-        self.tooltip = gsp.CreateToolTip(self.descrip_btn,'This is the Fitness Description viewer')
+        self.tooltip = gsp.CreateToolTip(self.descrip_btn,'This is the Fitness Description viewer',True)
         self.descrip_btn.pack(side=TOP,expand=NO,fill=X)
         self.__wrap = Frame(self)        
         self.list_w=Listbox(self.__wrap)

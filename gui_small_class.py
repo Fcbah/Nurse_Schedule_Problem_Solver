@@ -36,14 +36,21 @@ class CreateToolTip(object):
         self.wraplength = wraplength
     def set_text(self,text):
         self.text =text
-    def __init__(self, widget,text='widget info'):
+    def __init__(self,widget,text='widget info',click_toggle_mode=False):
         self.waittime = 500
         self.wraplength = 180
         self.widget = widget
         self.text= text
+        self.click_toggle_mode = click_toggle_mode
+
         self.widget.bind("<Enter>",self.enter)
         self.widget.bind("<Leave>",self.leave)
-        self.widget.bind("<ButtonPress>",self.leave)
+
+        if self.click_toggle_mode:
+            self.on = False
+            self.widget.bind("<ButtonPress>",self.resolve)
+        else:
+            self.widget.bind("<ButtonPress>",self.leave)
         self.id=None
         self.tw=None
     
@@ -53,6 +60,13 @@ class CreateToolTip(object):
     def leave(self, event=None):
         self.unschedule()
         self.hidetip()
+
+    def resolve(self,event=None):
+        if self.on:
+            self.hidetip()
+            self.on = False
+        else:
+            self.showtip()
     
     def schedule(self):
         self.unschedule()
@@ -65,6 +79,7 @@ class CreateToolTip(object):
             self.widget.after_cancel(id)
     
     def showtip(self, event=None):
+        self.on = True
         x=y=0
         x,y,cx,xy = self.widget.bbox('insert')
         x += self.widget.winfo_rootx() + 25
@@ -78,6 +93,7 @@ class CreateToolTip(object):
         label.pack(ipadx=1)
     
     def hidetip(self):
+        self.on = False
         tw = self.tw
         self.tw=None
         if tw:
