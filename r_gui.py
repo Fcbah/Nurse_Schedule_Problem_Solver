@@ -1049,6 +1049,64 @@ class fit_viewer(Frame):
 
         self.after(500,self.check_sel_change)        
     
+class particle_selector(Frame):
+    '''
+    Uses Menu Button to select particle
+    '''
+    def __init__(self,master,nsp):
+        if isinstance(nsp,Prob.NSP):
+            self.nsp = nsp
+        Frame.__init__(self,master)  
+
+        self.part_sel_changed = '<<particle_selected_changed>>'
+        self.var = StringVar()
+        self.txt =StringVar()
+
+        self.build_menu()
+        
+        self.button = Button(self,text='Change Selected Particle')
+        self.button.bind('<ButtonPress>',self.show_menu)
+        self.button.pack(side=TOP,expand=NO,fill=X)
+                
+        Label(self,text='selected particle',bg='blue',fg='white').pack(side=TOP,expand=NO,fill=X)
+        Text(self,textvariable=txt).pack(side=TOP,expand=NO,fill=X)
+
+    def build_menu(self):
+        self.men = Menu(self,tearoff=0)
+        
+        #on a norm nsp shouldnt be referenced in the gui it should be passed as an argument by the controller
+        #any event that would need to use a model object will have
+        for k,v in self.nsp.get_all_part_holder().items():
+            submen = Menu(self.men,tearoff=0)
+            if isinstance(v,Search.part_Holder):
+                r = v
+                for kk,vv in r.particles.items():
+                    submen.add_radiobutton(label=kk,value='%s %s'%(k,kk),variable=self.var,command=self.sel_change)
+                men.add_cascade(label=k, menu=submen)
+            else:
+                raise TypeError()
+        
+    def show_menu(self,e):
+        self.men.post(e.x_root,e.y_root)
+    
+    def sel_change(self):
+        k,kk= tuple(str(self.var.get()).split())
+        self.ext_part_set(k,kk)
+        
+    def on_part_holder_reset(self):
+        self.build_menu()
+        #there is no need to change the selected particle since partholders and particles cannot be deleted
+
+    def ext_part_set(self,k,kk):
+        '''
+        + k: is the key for the selected part_holder
+        +kk: is the key for the selected particle
+        '''
+        self.txt.set(kk)
+        self.selected_particle = self.nsp.get_all_part_holder()[k].particles[kk]
+        self.event_generate(self.part_sel_changed)
+
+
 class applyconst:
     '''
     For const_fxn_selector.selection_changed
