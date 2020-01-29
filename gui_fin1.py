@@ -41,8 +41,7 @@ class Top(Frame):
         
         self.disp = re.particle_display(self,nsp)
         self.nsp = nsp
-        self.left = Left(self,nsp)
-        self.left.part_select.bind(self.left.part_select.part_sel_changed,gg.fitview_sel_part_set(self.left.part_select,self.left.fit_view,self.disp))
+        self.left = Left(self,nsp)       
         
         #packing
 
@@ -50,12 +49,16 @@ class Top(Frame):
         self.disp.pack(side=RIGHT,expand=YES,fill=BOTH)
 
         #binding
-
         self.set1 = gg.part_disp_set_viol(self.disp,self.left.viol_select,nsp)
         self.left.viol_select.bind(self.left.viol_select.selection_changed,self.set1)
 
+        #self.left.part_select.bind(self.left.part_select.part_sel_changed,self.set1)# to enforce redrawing of the screen on partdisplay
+
         self.set2 = gg.part_disp_set_viol(self.disp,self.left.viol_select,nsp)
         self.left.viol_select.bind(self.left.viol_select.show_viol_changed,self.set1)
+
+        self.set3 =gg.fitview_sel_part_set(self.left.part_select,self.left.fit_view,self.disp,self.set1)
+        self.left.part_select.bind(self.left.part_select.part_sel_changed,self.set3)
 
 
 class Left(Frame):

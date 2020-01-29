@@ -337,6 +337,10 @@ class particle_display(Frame):
             self.extN_matrix = Search.part_Holder.extr_aggreg_nurse(x,self.problem.get_nurses_no(),self.problem.get_no_of_days())
             
             self.exp_extD_matrix = Search.part_Holder.extr_aggreg_days(x,self.problem.get_nurses_no(),self.problem.get_no_of_days(),self.problem.get_experienced_nurses_no())
+
+            #useless to enforce screen draw because violation calculations need to be recalculated
+            #self.wipe_all_screen()
+            #self.create_screen()
         else:
             raise TypeError('must be a valid matrix object')
     def stop_showing_violations(self):
@@ -922,6 +926,7 @@ class fit_viewer(Frame):
         to notify and update my selected particle
         '''
         self.selected_particle = particle
+        self.destablized = True
 
     def reset_fitness_lst(self):
         '''
@@ -967,6 +972,9 @@ class fit_viewer(Frame):
                 self.on_sel_change()
             else:
                 self.prev_sel = k
+        if self.destablized:
+            self.destablized= False
+            self.draw_canvas()
         self.after(500,self.check_sel_change)
 
     def on_sel_change(self):
@@ -1016,6 +1024,8 @@ class fit_viewer(Frame):
         if isinstance(nsp,Prob.NSP):
             ks = nsp
         self.args = nsp.get_fitness_args()
+
+        self.destablized = False
 
         Label(self,text='Fitness Viewer',bg='blue',fg='white').pack(side=TOP,expand=NO,fill=X,pady=5)
         self.descrip_btn = Button(self,text='Show Description')

@@ -31,7 +31,7 @@ class fitview_sel_part_set:
     A method class serving as an Event handler
     Handling setting fitviewer and partdisplay when selected particle is set
     '''
-    def __init__(self,part_sel,fit_viewer,part_disp):
+    def __init__(self,part_sel,fit_viewer,part_disp,viol_select_set):
         if isinstance(fit_viewer,r.fit_viewer):
             self.fit_viewer =fit_viewer
         else: raise TypeError()
@@ -42,11 +42,24 @@ class fitview_sel_part_set:
             self.part_disp = part_disp
         else: raise TypeError()
 
-        self()#to initialize
+        #self.started=False # to ensure viol select is not called on initialization
+        self.viol_sel = viol_select_set
+        #self()#to initialize
+        self.basic()
 
-    def __call__(self):
+    def __call__(self,*args):        
+        self.basic()
+        #if self.started:
+        #    self.viol_sel()
+        #else:
+        #    self.started= True
+        self.viol_sel()
+    def basic(self):
         self.fit_viewer.set_sel_particle(self.part_sel.selected_particle)
         self.part_disp.set_particle(self.part_sel.selected_particle)
+
+
+
 
 class CreateToolTip(object):
     """
