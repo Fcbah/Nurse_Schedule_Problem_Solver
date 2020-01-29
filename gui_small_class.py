@@ -26,6 +26,28 @@ class part_disp_set_viol:
 
         self.part_disp.create_screen()
 
+class fitview_sel_part_set:
+    '''
+    A method class serving as an Event handler
+    Handling setting fitviewer and partdisplay when selected particle is set
+    '''
+    def __init__(self,part_sel,fit_viewer,part_disp):
+        if isinstance(fit_viewer,r.fit_viewer):
+            self.fit_viewer =fit_viewer
+        else: raise TypeError()
+        if isinstance(part_sel,r.particle_selector):
+            self.part_sel = part_sel
+        else: raise TypeError()
+        if isinstance(part_disp,r.particle_display):
+            self.part_disp = part_disp
+        else: raise TypeError()
+
+        self()#to initialize
+
+    def __call__(self):
+        self.fit_viewer.set_sel_particle(self.part_sel.selected_particle)
+        self.part_disp.set_particle(self.part_sel.selected_particle)
+
 class CreateToolTip(object):
     """
     create a tooltip for a given widget

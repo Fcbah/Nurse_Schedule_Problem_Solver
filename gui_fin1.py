@@ -42,6 +42,7 @@ class Top(Frame):
         self.disp = re.particle_display(self,nsp)
         self.nsp = nsp
         self.left = Left(self,nsp)
+        self.left.part_select.bind(self.left.part_select.part_sel_changed,gg.fitview_sel_part_set(self.left.part_select,self.left.fit_view,self.disp))
         
         #packing
 
@@ -66,6 +67,8 @@ class Left(Frame):
         self.part_select = re.particle_selector(self,nsp)
         self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
         self.fit_view = re.fit_viewer(self,nsp)
+
+        
 
         #packing
 
