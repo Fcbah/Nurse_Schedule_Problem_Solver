@@ -1058,6 +1058,8 @@ class particle_selector(Frame):
             self.nsp = nsp
         Frame.__init__(self,master)  
 
+        self.d = '###&&##'
+
         self.part_sel_changed = '<<particle_selected_changed>>'
         self.var = StringVar()
         self.txt =StringVar()
@@ -1069,7 +1071,12 @@ class particle_selector(Frame):
         self.button.pack(side=TOP,expand=NO,fill=X)
                 
         Label(self,text='selected particle',bg='blue',fg='white').pack(side=TOP,expand=NO,fill=X)
-        Text(self,textvariable=txt).pack(side=TOP,expand=NO,fill=X)
+        Label(self,textvariable=self.txt).pack(side=TOP,expand=YES,fill=X)
+
+        m = nsp.get_all_part_holder().copy().popitem()
+        k,v = m[0],m[1]
+        kk = v.particles.copy().popitem()[0]
+        self.ext_part_set(k,kk)
 
     def build_menu(self):
         self.men = Menu(self,tearoff=0)
@@ -1081,8 +1088,8 @@ class particle_selector(Frame):
             if isinstance(v,Search.part_Holder):
                 r = v
                 for kk,vv in r.particles.items():
-                    submen.add_radiobutton(label=kk,value='%s %s'%(k,kk),variable=self.var,command=self.sel_change)
-                men.add_cascade(label=k, menu=submen)
+                    submen.add_radiobutton(label=kk,value='%s%s%s'%(k,self.d,kk),variable=self.var,command=self.sel_change)
+                self.men.add_cascade(label=k, menu=submen)
             else:
                 raise TypeError()
         
@@ -1090,14 +1097,24 @@ class particle_selector(Frame):
         self.men.post(e.x_root,e.y_root)
     
     def sel_change(self):
-        k,kk= tuple(str(self.var.get()).split())
-        self.ext_part_set(k,kk)
+        m= str(self.var.get()).split(self.d)
+        k,kk = m[0],m[1]
+        self.part_set(k,kk)
         
     def on_part_holder_reset(self):
         self.build_menu()
         #there is no need to change the selected particle since partholders and particles cannot be deleted
 
     def ext_part_set(self,k,kk):
+        '''
+        For external hook up
+        Using the part_holder key name
+        and the particle's key name
+        '''
+        self.var.set('%s%s%s'%(k,self.d,kk))
+        self.part_set(k,kk)
+
+    def part_set(self,k,kk):
         '''
         + k: is the key for the selected part_holder
         +kk: is the key for the selected particle
@@ -1145,7 +1162,7 @@ if __name__ == "__main__":
     info = Frame(Top)
 
     #viol = const_fxn_selector(info,list(r.get_all_constraints().items()))
-    info1 = Listbox(info)
+    info1 = particle_selector(info,r)
     info2 = fit_viewer(info,r)
 
     #******************** START *************************************************

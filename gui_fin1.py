@@ -63,7 +63,7 @@ class Left(Frame):
             self.nsp = nsp
         Frame.__init__(self,master)
         
-        self.part_select = Listbox(self)
+        self.part_select = re.particle_selector(self,nsp)
         self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
         self.fit_view = re.fit_viewer(self,nsp)
 

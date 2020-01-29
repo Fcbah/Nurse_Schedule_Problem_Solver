@@ -155,6 +155,7 @@ class NSP(part_Holder):
         n[self.self_name] = self
         if self.curr_search:
             n[self.curr_search_name] = self.curr_search
+        return n
     
     def get_all_constraint_fxn_obj(self):
         '''
