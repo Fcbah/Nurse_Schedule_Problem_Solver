@@ -892,7 +892,8 @@ class const_fxn_selector(Frame):
         #self.event_add(self.show_viol_changed.'<Destroy>')
 
         self.list_it=[]
-        self.fill_list(viol_fxn)    
+        self.fill_list(viol_fxn)
+        self.viol_fxn_lst = viol_fxn    
         
         if not viol_fxn:
             self.show_viol = 0
@@ -941,9 +942,9 @@ class fit_viewer(Frame):
         #tooltip wil be adjusted automatically
         self.event_generate(self.lst_reset)
 
-    def get_fit_fxn_dict(self):
+    def get_fit_fxn_lst(self):
         '''
-        Returns a dictionary not a list
+        Returns a list of tuple (key value pair)
         ==ext==
         For menubar to be able to synchronize the fitness list and to be able to have the same indexing
         '''
@@ -959,7 +960,7 @@ class fit_viewer(Frame):
         except:
             pass
         else:
-            self.list_w.selection_clear()
+            self.list_w.selection_clear(0,END)
             self.list_w.selection_set(index)
             # check sel will fish it out self.prev_sel1 = index
 
@@ -1037,6 +1038,10 @@ class fit_viewer(Frame):
         self.list_w.configure(yscrollcommand=self.scrolly.set)
         self.list_w.pack(side=LEFT,expand=NO,fill=Y)
         self.scrolly.pack(side=RIGHT,expand=NO,fill=Y)
+
+        self.boil = IntVar()
+        self.boil.set(0)
+        Checkbutton(self,text='Link with Constraints selector',variable=self.boil).pack(side=TOP,expand=NO,fill=X)
 
         self.canv = Canvas(self)        
         self.__wrap.pack(side=TOP,expand=NO,fill=X)        

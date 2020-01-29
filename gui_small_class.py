@@ -26,6 +26,30 @@ class part_disp_set_viol:
 
         self.part_disp.create_screen()
 
+class fitview_set_by_viol_sel:
+    def __init__(self,viol_sel,fit_view):
+        if isinstance(fit_view,r.fit_viewer):
+            self.fit_view = fit_view
+        if isinstance(viol_sel,r.const_fxn_selector):
+            self.viol_sel = viol_sel
+    
+    def get_index(self):
+        ind = self.viol_sel.prev_sel1
+        lst = self.fit_view.get_fit_fxn_lst()
+        sel = list(self.viol_sel.viol_fxn_lst)
+        key = sel[ind][0]
+
+        for i,kv in enumerate(lst):
+            if key in kv[0]:
+                return i
+                       
+        raise ValueError()
+
+    def __call__(self,*args):
+        if self.fit_view.boil.get():
+            wer = self.get_index()
+            self.fit_view.ext_set_sel_fit_fxn(wer)
+
 class fitview_sel_part_set:
     '''
     A method class serving as an Event handler

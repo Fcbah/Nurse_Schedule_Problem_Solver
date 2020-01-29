@@ -54,11 +54,14 @@ class Top(Frame):
 
         #self.left.part_select.bind(self.left.part_select.part_sel_changed,self.set1)# to enforce redrawing of the screen on partdisplay
 
-        self.set2 = gg.part_disp_set_viol(self.disp,self.left.viol_select,nsp)
+        #self.set2 = gg.part_disp_set_viol(self.disp,self.left.viol_select,nsp)
         self.left.viol_select.bind(self.left.viol_select.show_viol_changed,self.set1)
 
         self.set3 =gg.fitview_sel_part_set(self.left.part_select,self.left.fit_view,self.disp,self.set1)
         self.left.part_select.bind(self.left.part_select.part_sel_changed,self.set3)
+        
+        self.set4 = gg.fitview_set_by_viol_sel(self.left.viol_select,self.left.fit_view)
+        self.left.viol_select.bind(self.left.viol_select.selection_changed,self.set4)
 
 
 class Left(Frame):
@@ -78,6 +81,20 @@ class Left(Frame):
         self.part_select.pack(side=TOP,expand=YES,fill=BOTH)
         self.viol_select.pack(side=TOP, expand=YES,fill=BOTH)
         self.fit_view.pack(side=BOTTOM, expand=YES, fill=BOTH)
+
+class Bottom(Frame):
+    def disp_to_get_search(self):
+        self.clear_screen()
+
+    def clear_screen(self):
+        pass
+    def __init__(self,master):
+        Frame.__init__(self,master)
+        self.prog = re.progressbar(self)
+
+        #packing
+        self.prog.pack()
+        
 
 class MyDialog(Toplevel):
     '''
