@@ -7,13 +7,14 @@ class part_disp_set_viol:
     '''
     Event handler for particle display set violation
     '''
-    def __init__(self,part_disp,viol_select,nsp):
+    def __init__(self,part_disp,viol_select,nsp,set4):
         if isinstance(part_disp,r.particle_display):
             self.part_disp = part_disp
         if isinstance(viol_select,r.const_fxn_selector):
             self.viol_select = viol_select            
         if isinstance(nsp, P.NSP):
             self.nsp =nsp
+        self.set4 =set4
  
 
     def __call__(self,*args):
@@ -25,6 +26,7 @@ class part_disp_set_viol:
             self.part_disp.stop_showing_violations()
 
         self.part_disp.create_screen()
+        self.set4()
 
 class fitview_set_by_viol_sel:
     def __init__(self,viol_sel,fit_view):
