@@ -136,6 +136,8 @@ class ab_Search():
         assert False,'abstract method, must be implemented in class'
     def get_particles(self):
         assert False,'abstract method, must be implemented in class'
+    def get_fitt(self):
+        assert False, 'abstract method, must be implememted in class'
 
 class Search(part_Holder,ab_Search):
     '''
@@ -177,10 +179,11 @@ class Search(part_Holder,ab_Search):
         self.ite = ite
         self.maxite = maxite
 
-        if self.show_mean:
-            self.fx_queue.put((ite,np.mean(fx[np.isfinite(fx)]))) #filters out the infinite
-            if(fp):
-                self.fp_queue.put((ite,np.mean(fp[np.isfinite(fp)]))) #filters out the infinite
+        #Handled by search monitor
+        #if self.show_mean:
+            #self.fx_queue.put((ite,np.mean(fx[np.isfinite(fx)]))) #filters out the infinite
+            #if(fp):
+                #self.fp_queue.put((ite,np.mean(fp[np.isfinite(fp)]))) #filters out the infinite
         
 
         if not self.playState:
@@ -410,6 +413,8 @@ class Search(part_Holder,ab_Search):
         This is the dimension of the vectors in the problem space
         '''
         return self.nsp.get_vect_len()
+    def getfitt(self):
+        return self.fitt
 
     def __init__(self,maxite,Fitness,nsp,show_mean=True):
     #def __init__(self,maxite,Fitness,nsp=NSP()):
@@ -426,11 +431,11 @@ class Search(part_Holder,ab_Search):
         else:
             raise TypeError('"nsp" must be a valid instance of "NSP"')
         
-        self.show_mean = show_mean
+        #self.show_mean = show_mean
 
         self.ite=0
-        self.fx_queue = Queue(1000)
-        self.fp_queue = Queue(1000)
+        #self.fx_queue = Queue(1000)
+        #self.fp_queue = Queue(1000)
         
         self.started = False
         self.ended = False

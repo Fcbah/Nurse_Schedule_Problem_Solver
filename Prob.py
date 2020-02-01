@@ -6,6 +6,10 @@ from Search import Search, part_Holder,ab_Search
 from gentic import gen_algo
 
 
+def event_trigger(func_list,*args,**kwargs):
+    for fxn in func_list:
+        fxn(*args,**kwargs)    
+
 
 class NSP(part_Holder):
 
@@ -174,15 +178,15 @@ class NSP(part_Holder):
         '''
         outp = {}
         for ky,val in self.man_fitt.items():
-            outp['M %s'%ky] =val.fitt
+            outp['M %s'%ky] =val
 
         for ky,val in self.prev_searches.items():
-            outp['P %s'%ky] = val.fitt
+            outp['P %s'%ky] = val.get_fitt()
         
         outp['D %s'%self.self_name] = self.fitt
         
         if self.curr_search:
-            outp['D %s'%self.curr_search_name] = self.curr_search.fitt       
+            outp['D %s'%self.curr_search_name] = self.curr_search.get_fitt()       
         
         for ky,val in self.get_all_constraint_fxn_obj().items():
             outp['C %s'%ky] = val #uneditable starts with H and C        
@@ -216,6 +220,38 @@ class NSP(part_Holder):
         y = np.random.randint(0,4,self.get_vect_len())
         #return gen_algo.regenerat(y,self.get_fitness_args(),self.get_Hard_Viol_fxns())
         return y
+    def add_event_on_new_info(self,func):
+        '''
+        Adds a new event handler to NSP events which links up the Search monitors "add_info" event
+        + It triggers when information entering the info log comes up
+        + format func(message='',time_cp=234.34,time_el=432.45)
+        '''
+        if func:
+            self.__on_new_info.append(func)
+    def add_event_on_new_search_centric(self,func):
+        '''
+        Adds a new event handler to NSP events which links up the Search monitors and Search generated "Search_centric" event
+        + It triggers when events altering the validity of Search controls occurs
+        + format === func()
+        '''
+        if func:
+            self.__on_search_centric.append(func)
+
+    def trigger_on_new_info(self,*args,**kwargs):
+        '''
+        Allows external objects or internal (mostly Search_Monitor) to trigger a new info show up to our subscribers
+        Format === kwargs = dict(message='',time_cp=234.34,time_el=432.45)
+        '''
+        if self.__on_new_info:
+            event_trigger(self.__on_new_info,*args,**kwargs)
+
+    def trigger_on_search_centric(self,*args,**kwargs):
+        '''
+        Allows external objects or internal ones to trigger an alert that the validity of one or more of the search controls might have been compromised or recuscitated by an observed occurence
+        Format == () empty.
+        '''
+        if self.__on_search_centric:
+            event_trigger(self.__on_search_centric,*args,**kwargs)
 
     def __init__(self,no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse=3/14,preference=(4,2,2,2),min_experienced_nurse_per_shift=1,min_night_per_nurse=3/14):
         '''
@@ -223,6 +259,9 @@ class NSP(part_Holder):
         ==inh|==
         experienced nurses cannot exceed the nurses no
         '''
+        #events
+        self.__on_new_info = []
+        self.__on_search_centric =[]
 
         self.__nsp__ = dict(no_of_days=no_of_days,nurses_no=nurses_no,experienced_nurses_no=experienced_nurses_no)
         self.__arg_const__= dict(max_night_per_nurse=max_night_per_nurse,preference=preference,min_experienced_nurse_per_shift=min_experienced_nurse_per_shift,min_night_per_nurse=min_night_per_nurse)
@@ -231,14 +270,14 @@ class NSP(part_Holder):
         self.H2 =  Fit.Const_Fxn(c.H2,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0,
         Description='''It is violation-showing fitness function that expresses one of the Hard Constraints H2.
     CHECKS: If there is no nurse having a Morning Shift immediately after Night Shift. 
-    NORMALIZATION: The result is normalized in the -ve direction over all NURSES AND DAYS
+    NORMALIZATION: The result is normalized in the -ve direction over all NIGHT -SHIFTS
     ''')#nd2
 
         self.H3 = Fit.Const_Fxn(c.H3b,self,is_obj_fxn=True,is_Hard=True,viol_Type=(None,),Default_Weight=0,
         Description='''It is a violation-showing fitness function that expresses one of the Hard Constraints H3.
     CHECKS: If the number of night shift every nurse have is not more than MAXIMUM.
     MAXIMUM SET BY:  max_night_per_nurse - e.g. 3/14 means 3 night shifts per two weeks is the MAXIMUM
-    NORMALIZATION: The result is normalized in the -ve direction over all NURSES and DAYS
+    NORMALIZATION: The result is normalized (it is not so obvious and may be confusing) in the -ve direction over all NURSES and DAYS
     ''')#nd2
         
         self.C1 = Fit.Const_Fxn(c.C1,self,viol_Type=('N',),Default_Weight=4,
@@ -247,7 +286,7 @@ class NSP(part_Holder):
     NORMALIZATION: The result is normalized over all NURSES
     ''')#n
         
-        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type=('D',),Default_Weight=0,
+        self.C2A = Fit.Const_Fxn(c.C2A,self,viol_Type=('D',),Default_Weight=4,
         Description='''It is a violation-showing fitness function that expresses one of the Soft Constraints C2.
     CHECKS:By how much does the schedule (particle) achieves the Hospital's Minimum Preference i.e. On How many days in the schedule was this achieved
     PREFERENCE SET BY: preference - e.g. (4,2,2,2) means MINIMUM of 4 nurses - OFF, 2 - MORNING, 2-EVENING, 2-NIGHT
@@ -319,7 +358,7 @@ class NSP(part_Holder):
                 
         part_Holder.__init__(self,Fitness=Fit.Fitness_Fxn(self))
 
-        self.fitt.description += '\n   This is the Fitness function suspected to be used by the author of the article "Solving complex NSP using PSO"'
+        self.fitt.description += '\n   This is the Fitness function suspected to be used by the author of the article "Solving complex NSP using PSO C1 4,C2A 4,C2A1 0,C2B 0,C2B1 0,C3 1,C4 0,C4B 1,C5 1,C6 1"'
 
         self.curr_search = None
         self.prev_searches= {}
@@ -343,6 +382,3 @@ class NSP(part_Holder):
                                                     0,2,1,0,1,1,1,2,1,0,0,0,3,0])
 
         self.man_fitt ={}
-
-
-

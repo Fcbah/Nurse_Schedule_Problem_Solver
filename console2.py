@@ -89,11 +89,13 @@ def conv1(m):
 if __name__ == '__main__':
     s = Prob.NSP()
     
-    newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0.6,C4B=0.4,C5=1,C6=1)
-    r = s.create_genetic_search(10,0.01,10000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=newWeight))
-    #r = s.create_PSO_search(100,1000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=snewWeight))
+    #we are using new weight because we discovered that whenever we don't the search just gets stuck at a particular value like 29%. We cant be sure that the weighting is the problem until we are sure that the overall mean of particle is very close the maximum that means that if e.g. we are using PSO then the overall particles will be satisfied and there is no movement among particles atall again. That should be a STUCKING EFFECT
+    newWeight = dict(C1=4,C2A=1,C2A1=1,C2B=1,C2B1=1,C3=1,C4=0.6,C4B=0.4,C5=1,C6=1)
+    #r = s.create_genetic_search(10,0.01,10000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=newWeight))
+    r = s.create_PSO_search(100,1000,Fitness_fxn=Fit.Fitness_Fxn(s,const_fxns=s.soft_con_dict,weights=newWeight))
 
-    sr = S_M.Search_Timer(r)
+    sr = S_M.Search_Monitor(r,'Stupid search')
+    #sr = S_M.Search_Timer(r) #sorted how #on_ite_changed in search_monitor was not working and now this is working perfectly
     sr.add_on_ite_changed(on_i_c)
     sr.add_on_new_best(on_n_b)
     sr.add_on_ended(on_n_m)

@@ -2,8 +2,10 @@ from tkinter import *
 import tkinter.messagebox as p
 import numpy as np
 import Prob
+import Fit as f
 import r_gui as re
 import gui_small_class as gg
+import Search_Monitor as Sear_Moni
 
 class window(Frame):
     def __init__(self,master=None):
@@ -61,8 +63,7 @@ class Top(Frame):
 
         self.set3 =gg.fitview_sel_part_set(self.left.part_select,self.left.fit_view,self.disp,self.set1)
         self.left.part_select.bind(self.left.part_select.part_sel_changed,self.set3)
-        
-        
+       
 class Left(Frame):
     def __init__(self,master,nsp):
         if isinstance(nsp,Prob.NSP):
@@ -72,29 +73,48 @@ class Left(Frame):
         self.part_select = re.particle_selector(self,nsp)
         self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
         self.fit_view = re.fit_viewer(self,nsp)
-
-        
+    
 
         #packing
 
-        self.part_select.pack(side=TOP,expand=YES,fill=BOTH)
-        self.viol_select.pack(side=TOP, expand=YES,fill=BOTH)
-        self.fit_view.pack(side=BOTTOM, expand=YES, fill=BOTH)
+        self.part_select.pack(side=TOP,expand=NO,fill=X)
+        self.viol_select.pack(side=TOP, expand=NO,fill=X)
+        self.fit_view.pack(side=BOTTOM, expand=NO, fill=X)
 
 class Bottom(Frame):
     def disp_to_get_search(self):
         self.clear_screen()
+    
+    def alert_search(self):
+        self.event_generate(self.new_search_created)
 
     def clear_screen(self):
         pass
-    def __init__(self,master):
+    def __init__(self,master,nsp):
+        if isinstance(nsp,Prob.NSP):
+            self.nsp = nsp
+        else: raise TypeError()
+
+        self.new_search_created = '<<new_search_created>>'
+        
         Frame.__init__(self,master)
+
+        newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0,C4B=1,C5=1,C6=1)
+        f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, It tries to consider all the fine grained fitness fxns, that would make the problem space easily transitable C1 4,C2A 2,C2A1 1,C2B 2,C2B1 2,C3 1,C4 0,C4B 1,C5 1,C6 1",const_fxns=self.nsp.soft_con_dict,weights=newWeight)
+
+        tuy = self.nsp.create_PSO_search(100,2000,Fitness_fxn=f_fxn)
+        sem = Sear_Moni.Search_Timer(tuy)
+        
         self.prog = re.progressbar(self)
+
+        #1 attach ite,maxiter,mean,current_time,TimeRemaining and progressbar to check events
+        #2 attach validity check to search_centric events. This also works by setting flags.
+        #3 attach statusbar to addinfo event.All what addinfo does is set a flag to update control status. so any new flag set while this is done is not having any effect. the normal routine check now does the update.
+        #4 Hook up to on ended so as to wipe out the screen and give options
 
         #packing
         self.prog.pack()
         
-
 class MyDialog(Toplevel):
     '''
     Learnt From

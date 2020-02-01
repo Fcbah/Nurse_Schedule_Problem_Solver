@@ -1,6 +1,8 @@
 import time
 import sys
 import Search
+import gentic,PSO
+import numpy as np
 
 def get_time_cp():
     '''
@@ -22,7 +24,6 @@ STARTED = 1
 INITIALIZED =2
 ITE_CHANGED = 3
 ENDED = 4
-
 
 class Search_Timer(Search.ab_Search):
     '''
@@ -198,6 +199,11 @@ class Search_Timer(Search.ab_Search):
         return self._search_obj.is_started()
     def has_ended(self):
         return self._search_obj.has_ended()
+    def get_fitt(self):
+        '''
+        This gives the Fitness function cached by the Super Class "part_Holder"
+        '''
+        return self._search_obj.get_fitt()
     def get_fit_args(self):
         return self._search_obj.get_fit_args()
     def get_no_of_days(self):
@@ -205,6 +211,9 @@ class Search_Timer(Search.ab_Search):
     def get_nurses_no(self):
         return self._search_obj.get_nurses_no()
     def get_particles(self):
+        '''
+        This gives the particles cached by the Super Class "part_Holder" which are the global bests encountered during the search
+        '''
         return self._search_obj.get_particles()
     
     def set_b4stop(self,func):
@@ -302,6 +311,162 @@ class Search_Timer(Search.ab_Search):
         
         self.timer_state = NOT_BEGUN
 
-
-        
+def p_d_t(time_s,show_milli=False):
+    '''
+    Returns time in the form (days,hours,minutes,seconds,(milliseconds))
+    '''
+    sec = int(time_s)
+    milli = time_s - sec
+    milli = milli*1000
+    milli = int(milli)
     
+    minu = int(sec/60)
+    sec = sec%60
+    
+    hrs = int(minu/60)
+    minu = minu%60
+    
+    days = int(hrs/24)
+    hrs = hrs%24
+    if show_milli:
+        return days,hrs,minu,sec,milli
+    return days,hrs,minu,sec
+
+def tost(time_s,show_milli=False):
+    plate = ('days','hours','minutes','seconds')
+    if show_milli:
+        win = tuple(p_d_t(time_s,True))
+        print(win)
+        if win[0]:
+            return '%d days, Time=> %02d:%02d:%02d.%03d '%win
+        return '%02d:%02d:%02d.%03d'%win[1:]
+    else:
+        win = tuple(p_d_t(time_s,True))
+        ans = ''
+        for k,x in enumerate(win):
+            if x:
+                ans += '%d %s'%(x,plate[k])
+
+def event_trigger(func_list,*args,**kwargs):
+    for fxn in func_list:
+        fxn(*args,**kwargs)    
+
+
+class Search_Monitor(Search_Timer):
+    '''
+    This maintains a list of timed information of occurrences to the nsp 
+    during the period of the search from the start of the search to the 
+    end of it
+    + It also maintains the process of obtaining the mean from the Search
+    '''
+    def on_init(self,*args,**kwargs):
+        self.add_info('%s initialized succesfully'%self.name)
+
+    def on_star(self,*args,**kwargs):
+        self.add_info('%s search Begins'%self.name)
+
+    def on_ended_(self,*args,**kwargs):
+        self.add_info('%s search Ends'%self.name)
+    
+    def on_error(self,ite=0,msg='',*args,**kwargs):
+        self.add_info('Error: %s found in %s search @ ite %s'%(msg,self.name,ite))
+    
+    def on_new_best(self,ite=0,fg=0,*args,**kwargs):
+        self.add_info('New Best found @ ite: %d with objective fxn value %.3f'%(ite,fg))
+    
+    def on_pause(self,ite=0,*args,**kwargs):
+        self.add_info('%s search paused @ ite %d'%(self.name,ite))
+    
+    def on_play(self,ite=0,*args,**kwargs):
+        self.add_info('%s search resumes @ ite %d'%(self.name,ite))
+
+    def on_ite_changed(self,ite=0,fx=[],fp=[],*args,**kwargs):        
+        if isinstance(fx,np.ndarray):
+            self.__fx =fx
+        if isinstance(fp,np.ndarray):
+            self.__fp=fp
+
+    def get_mean_fx(self):
+        '''
+        Returns the mean of the obj_fxn on the population wherever it is finite
+        Returns
+        =======
+        Float, -1:Infinity, or None
+        '''
+        m = self.__fx
+        if isinstance(m,np.ndarray):
+            k = m[np.isfinite(m)]
+            if len(k):
+                return np.mean(k)
+            else:
+                return -1 
+
+    def get_mean_fp(self):
+        '''
+        Returns the mean of the obj_fxn of the population's __personal_best when it is available else it returns the mean of the obj_fxn and finite 
+        Returns
+        =======
+        Float,-1:infinity, or None
+        '''
+        m = self.__fp
+        if isinstance(m,np.ndarray):
+            k = m[np.isfinite(m)]
+            if len(k):
+                return np.mean(k)
+            else:
+                return -1
+        else:
+            return self.get_mean_fx()
+
+    def add_info(self,message=''):
+        '''
+        Adds information to internal `infolist` and afterwards
+        trigger the `NSP`'s `on_new_info` event
+        '''
+        nsp = self._search_obj.nsp
+        time_cp =self.get_curr_search_time_cp()
+        time_el =self.get_curr_time_el()
+        self.infolist.append('%s @ cpu time:%s @ elapsed time:%s'%(message,tost(time_cp,True),tost(time_el,True)))
+        
+        nsp.trigger_on_new_info(message=message,time_cp=time_cp,time_el=time_el)
+
+    def trigger_Search_centric_event(self):
+        '''
+        This triggers an event that prompts the gui to re-evaluate the validity of search controls: BEGIN PAUSE PLAY EXTEND STOP and on ENDED controls need to be designed to clear screen for creation of new search object
+        Some will be in the Search Object while others will be in the search monitor
+        '''
+        self._search_obj.nsp.trigger_on_search_centric()
+
+    def get_curr_message(self):
+        if (self.get_curr_time_el ()-self.__time_cur_set) < self.__cur_duration:
+            return self.__curr_message
+        else:
+            return self.__standby_message
+            
+    def __init__(self,search_obj,name):
+        Search_Timer.__init__(self,search_obj)
+        
+        self.name = name
+        self.infolist =[]
+        self.__curr_message = '__init__ inco' #it expires after
+        self.__time_cur_set =0 #This total elapsed time
+        self.__cur_duration =5 #in seconds
+        self.__standby_message='...Search Not Yet Started...' #also can be'...Searching...' '...paused...'
+
+        self.__fx=None
+        self.__fp=None
+                
+        #not needed bcs in gui self.after(timer) will only be called after all processing has been done on previous mean and since it will be computed by the gui thread, I will have no overhead worries.
+        #self.undone = False
+
+        self.add_on_start(self.on_star)
+        self.add_on_initialized(self.on_init)
+        self.add_on_ite_changed(self.on_ite_changed)
+        self.add_on_new_best(self.on_new_best)
+        self.add_on_error(self.on_error)
+        self.add_on_pause(self.on_pause)
+        self.add_on_play(self.on_play)
+        self.add_on_ended(self.on_ended_)
+
+        #self.__on_new_info =[]
+
