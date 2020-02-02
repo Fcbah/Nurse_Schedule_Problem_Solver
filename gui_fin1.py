@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter.ttk import Progressbar
 import tkinter.messagebox as p
 import numpy as np
 import Prob
@@ -9,7 +10,7 @@ import Search_Monitor as Sear_Moni
 
 class window(Frame):
     def __init__(self,master=None):
-        Frame.__init__(self,master)
+        Frame.__init__(self,master)        
         self.prob_conf = Button(self,text='Click to configure the nursing schedule problem',padx=50,pady=50, command=self.prob_configure)
         self.prob_conf.pack(side=LEFT,expand=NO)
         self.isconfig=False
@@ -26,7 +27,12 @@ class window(Frame):
             r = Prob.NSP(**arg_dict)
             
             self.top = Top(self,r)
+            self.bot = Bottom(self,r)
+
+            #I set this ordering to make sure that the bottom widget is always visible
+            self.bot.pack(side=BOTTOM,expand=NO,fill=X)
             self.top.pack(side=TOP,expand=YES,fill=BOTH)
+            
 
             dis = self.top.disp
             p =r.particles.copy().popitem()[1]
@@ -74,7 +80,6 @@ class Left(Frame):
         self.viol_select = re.const_fxn_selector(self,list(self.nsp.get_all_constraint_fxn_obj().items()))
         self.fit_view = re.fit_viewer(self,nsp)
     
-
         #packing
 
         self.part_select.pack(side=TOP,expand=NO,fill=X)
@@ -83,13 +88,54 @@ class Left(Frame):
 
 class Bottom(Frame):
     def disp_to_get_search(self):
-        self.clear_screen()
-    
+        self.clear_screen()    
     def alert_search(self):
         self.event_generate(self.new_search_created)
-
     def clear_screen(self):
         pass
+    def check_check(self):
+        pass
+    def draw_canvas(self):
+        #self.clear_canvas()
+        x_len = 140
+        y_len = 30
+        font = ('Times New Roman',12)
+        a =2
+        a00 = a,a,a+x_len,a + y_len
+        a10=a,a+y_len,a +x_len,a+ 2*y_len
+        a01 = a+x_len,a,a+2*x_len,a+ y_len
+        a11 = a+x_len,a+y_len,a+2*x_len,a+2*y_len
+        a20 = a,a+2*y_len,a+x_len,a+3*y_len
+        a21 = a+x_len,a+2*y_len,a+2*x_len,a+3*y_len
+
+        t1 = '00:10 33.158' #cpu time
+        t2 = '00:14 49.058' #wall time
+        t3 = '00:20 22.498'#cpu time rem
+        t4 = '00:23 45.358' #wall time rem
+
+        self.canv.create_rectangle(*a00,tags=('all','rect'))
+        self.canv.create_rectangle(*a10,fill='green',tags=('all','rect'))
+        self.canv.create_rectangle(*a01,tags=('all','rect'))
+        self.canv.create_rectangle(*a11,fill='green',tags=('all','rect'))
+        self.canv.create_rectangle(*a20,fill='red',tags=('all','rect'))
+        self.canv.create_rectangle(*a21,fill='red',tags=('all','rect'))   
+
+        self.canv.create_text(a00[0] +x_len/2, a00[1]+y_len/2,text='CPU Time',tags=('all','text'))
+        self.canv.create_text(a01[0] +x_len/2, a01[1] + y_len/2,text='Wall Time',tags=('all','text'))
+
+        self.canv.create_text(a10[0]+x_len/2, a10[1]+y_len/2,font = font,text='%s'%t1,fill='white',tags=('all','text'))
+        self.canv.create_text(a11[0]+x_len/2, a11[1]+y_len/2,font = font,text='%s'%t2,fill='white',tags=('all','text'))
+
+        self.canv.create_text(a20[0]+x_len/2, a20[1]+y_len/2,font = font,text='%s'%t3,fill='white',tags=('all','text'))
+        self.canv.create_text(a21[0]+x_len/2, a21[1]+y_len/2,font = font,text='%s'%t4,fill='white',tags=('all','text'))
+    
+    def set_show_s(self):
+        self.it.set('%d'%0)
+        self.maxit.set('%d'%1200)
+        self.mean_x.set('%.5f'%2.3344456)
+        self.mean_p.set('%.5f'%2.3344453)
+        self.status.set('...SEARCH NOT YET STARTED...') #'SEARCH UNCONFIGURED'
+
     def __init__(self,master,nsp):
         if isinstance(nsp,Prob.NSP):
             self.nsp = nsp
@@ -102,10 +148,52 @@ class Bottom(Frame):
         newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0,C4B=1,C5=1,C6=1)
         f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, It tries to consider all the fine grained fitness fxns, that would make the problem space easily transitable C1 4,C2A 2,C2A1 1,C2B 2,C2B1 2,C3 1,C4 0,C4B 1,C5 1,C6 1",const_fxns=self.nsp.soft_con_dict,weights=newWeight)
 
-        tuy = self.nsp.create_PSO_search(100,2000,Fitness_fxn=f_fxn)
-        sem = Sear_Moni.Search_Timer(tuy)
+        tuy = self.nsp.create_PSO_search(100,500,Fitness_fxn=f_fxn)
+        self.sem = Sear_Moni.Search_Monitor(tuy,'under build')
         
-        self.prog = re.progressbar(self)
+        self.Removable = Frame(self)
+        
+        #section 1
+        self.cover = Frame(self.Removable)
+        self.prog = Progressbar(self.cover,mode='determinate',maximum=1000,value=100)
+        self.percent = Label(self.cover,text='10%')
+        self.timeRem = Label(self.cover,text='23 hours, 4 minutes, 15 seconds remaining')
+        _wrap = Frame(self.cover)
+        self.photos = {'pl':PhotoImage(file='icons/play.png'),'pa':PhotoImage(file='icons/pause.png'),'st':PhotoImage(file='icons/stop.png'),'pr':PhotoImage(file='icons/prev.png'),'ne':PhotoImage(file='icons/next.png')}
+        taaa = ('pl','pa','st','pr','ne')
+        descrp = {'pl':'To begin a Search or Play after a Pause','pa':'To pause an ongoing search','st':'To stop an ongoing search','pr':'This is to reduce the maximum iteration of the search by the number entered here','ne':'To extend the maximum iteration of the search by whatever number entered here'}
+        for but in taaa:
+            t = Button(_wrap,image=self.photos[but])
+            t.pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
+            gg.CreateToolTip(t,descrp[but],wrap_length=1000)
+
+            if but=='pr':
+                Entry(_wrap,width=8).pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
+        #Section 2
+        self.canv = Canvas(self.Removable)
+        self.canv.configure(width=284,height=100)
+        self.draw_canvas()
+        
+        #Section 3
+        self.show_s = Frame(self.Removable)
+        self.it = StringVar()
+        self.maxit= StringVar()
+        self.mean_x = StringVar()
+        self.mean_p = StringVar()
+        Label(self.show_s,text='Iteration: ',font=('Verdana',11)).grid(row=0,column=0,sticky=E)
+        Label(self.show_s,text='Max iteration: ').grid(row=1,column=0,sticky=E)
+        Label(self.show_s,text='Population Mean: ').grid(row=2,column=0,sticky=E)
+        Label(self.show_s,text='P_Best Mean: ').grid(row=3,column=0,sticky=E)
+
+        Label(self.show_s,textvariable=self.it).grid(row=0,column=1,sticky=W)
+        Label(self.show_s,textvariable=self.maxit).grid(row=1,column=1,sticky=W)
+        Label(self.show_s,textvariable=self.mean_x).grid(row=2,column=1,sticky=W)
+        Label(self.show_s,textvariable=self.mean_p).grid(row=3,column=1,sticky=W)
+        
+
+        self.status = StringVar()
+        
+        self.set_show_s()
 
         #1 attach ite,maxiter,mean,current_time,TimeRemaining and progressbar to check events
         #2 attach validity check to search_centric events. This also works by setting flags.
@@ -113,8 +201,18 @@ class Bottom(Frame):
         #4 Hook up to on ended so as to wipe out the screen and give options
 
         #packing
-        self.prog.pack()
+        self.prog.pack(side=TOP,expand=NO,fill=X)        
+        _wrap.pack(side=BOTTOM,expand=NO,fill=X)
+        self.percent.pack(side=LEFT,expand=NO,padx=5)
+        self.timeRem.pack(side=RIGHT,expand=NO,padx=5)
+
+        self.cover.pack(side=LEFT,expand=YES,fill=BOTH)
+        self.show_s.pack(side=RIGHT,expand=NO)
+        self.canv.pack(side=RIGHT,expand=NO,padx=4)
         
+        self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
+        Label(self,bg='blue',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,anchor=W)        
+
 class MyDialog(Toplevel):
     '''
     Learnt From

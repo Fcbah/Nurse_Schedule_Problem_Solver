@@ -460,4 +460,6 @@ class Search(part_Holder,ab_Search):
         self.g =[]
         self.fg =[]
 
-        Thread(target=self.start).start()
+        self.threadd = Thread(target=self.start)
+        self.threadd.daemon = True
+        self.threadd.start()

@@ -329,17 +329,16 @@ def p_d_t(time_s,show_milli=False):
     days = int(hrs/24)
     hrs = hrs%24
     if show_milli:
-        return days,hrs,minu,sec,milli
+        hrs += days *24
+        return hrs,minu,sec,milli
     return days,hrs,minu,sec
 
 def tost(time_s,show_milli=False):
     plate = ('days','hours','minutes','seconds')
     if show_milli:
         win = tuple(p_d_t(time_s,True))
-        print(win)
-        if win[0]:
-            return '%d days, Time=> %02d:%02d:%02d.%03d '%win
-        return '%02d:%02d:%02d.%03d'%win[1:]
+        #print(win)        
+        return '%02d:%02d %02d.%03d'%win
     else:
         win = tuple(p_d_t(time_s,True))
         ans = ''
