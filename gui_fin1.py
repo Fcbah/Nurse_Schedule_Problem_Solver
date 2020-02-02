@@ -91,12 +91,17 @@ class Bottom(Frame):
         self.clear_screen()    
     def alert_search(self):
         self.event_generate(self.new_search_created)
-    def clear_screen(self):
+    def clear_canv(self):
+        self.canv.delete('all')       
         pass
     def check_check(self):
+        self.draw_canvas()
+        self.set_show_s()
+
+        self.gid = self.after(100,self.check_check)
         pass
     def draw_canvas(self):
-        #self.clear_canvas()
+        self.clear_canv
         x_len = 140
         y_len = 30
         font = ('Times New Roman',12)
@@ -108,10 +113,10 @@ class Bottom(Frame):
         a20 = a,a+2*y_len,a+x_len,a+3*y_len
         a21 = a+x_len,a+2*y_len,a+2*x_len,a+3*y_len
 
-        t1 = '00:10 33.158' #cpu time
-        t2 = '00:14 49.058' #wall time
-        t3 = '00:20 22.498'#cpu time rem
-        t4 = '00:23 45.358' #wall time rem
+        t1 = Sear_Moni.tost(self.sem.get_curr_search_time_cp(),show_milli=True)#'00:10 33.158' #cpu time
+        t2 = Sear_Moni.tost(self.sem.get_curr_time_el(),True)#'00:14 49.058' #wall time
+        t3 = Sear_Moni.tost(self.sem.get_time_remaining_cp(),True)#'00:20 22.498'#cpu time rem
+        t4 = Sear_Moni.tost(self.sem.get_time_remaining_el(),True)#'00:23 45.358' #wall time rem
 
         self.canv.create_rectangle(*a00,tags=('all','rect'))
         self.canv.create_rectangle(*a10,fill='green',tags=('all','rect'))
@@ -130,11 +135,39 @@ class Bottom(Frame):
         self.canv.create_text(a21[0]+x_len/2, a21[1]+y_len/2,font = font,text='%s'%t4,fill='white',tags=('all','text'))
     
     def set_show_s(self):
-        self.it.set('%d'%0)
-        self.maxit.set('%d'%1200)
-        self.mean_x.set('%.5f'%2.3344456)
-        self.mean_p.set('%.5f'%2.3344453)
-        self.status.set('...SEARCH NOT YET STARTED...') #'SEARCH UNCONFIGURED'
+        '''
+        sets 
+        progress bar
+        ite,maxite,mean_x,mean_p
+        status_bar
+        percent and timeRemaining
+        '''
+        it=self.sem.get_ite()#ite
+        maxit=self.sem.get_maxiter()#maximum iteration
+        mean_x=self.sem.get_mean_fx()
+        mean_p =self.sem.get_mean_fp()
+        stat= self.sem.get_curr_message()
+        perc= self.sem.get_percent_complete()
+        timeRem = self.sem.get_time_remaining_el()
+
+        self.prog.configure(maximum=maxit,value=it)#progress_bar
+
+        self.it.set('%d'%it)        
+        self.maxit.set('%d'%maxit)
+        
+        if mean_x:
+            self.mean_x.set('%.5f'%mean_x)
+        else:
+            self.mean_x.set('Not_Set')
+        if mean_p:
+            self.mean_p.set('%.5f'%mean_p)
+        else:
+            self.mean_p.set('Not_Set')
+
+        self.status.set('%s'%stat) #'SEARCH UNCONFIGURED' ...SEARCH NOT YET STARTED...
+
+        self.percent.set('%d%%'%int(perc))
+        self.timeRem.set('%s Remaining'%Sear_Moni.tost(timeRem))
 
     def __init__(self,master,nsp):
         if isinstance(nsp,Prob.NSP):
@@ -156,8 +189,7 @@ class Bottom(Frame):
         #section 1
         self.cover = Frame(self.Removable)
         self.prog = Progressbar(self.cover,mode='determinate',maximum=1000,value=100)
-        self.percent = Label(self.cover,text='10%')
-        self.timeRem = Label(self.cover,text='23 hours, 4 minutes, 15 seconds remaining')
+        
         _wrap = Frame(self.cover)
         self.photos = {'pl':PhotoImage(file='icons/play.png'),'pa':PhotoImage(file='icons/pause.png'),'st':PhotoImage(file='icons/stop.png'),'pr':PhotoImage(file='icons/prev.png'),'ne':PhotoImage(file='icons/next.png')}
         taaa = ('pl','pa','st','pr','ne')
@@ -190,10 +222,8 @@ class Bottom(Frame):
         Label(self.show_s,textvariable=self.mean_x).grid(row=2,column=1,sticky=W)
         Label(self.show_s,textvariable=self.mean_p).grid(row=3,column=1,sticky=W)
         
-
         self.status = StringVar()
         
-        self.set_show_s()
 
         #1 attach ite,maxiter,mean,current_time,TimeRemaining and progressbar to check events
         #2 attach validity check to search_centric events. This also works by setting flags.
@@ -203,15 +233,22 @@ class Bottom(Frame):
         #packing
         self.prog.pack(side=TOP,expand=NO,fill=X)        
         _wrap.pack(side=BOTTOM,expand=NO,fill=X)
-        self.percent.pack(side=LEFT,expand=NO,padx=5)
-        self.timeRem.pack(side=RIGHT,expand=NO,padx=5)
+        self.percent = StringVar()
+        Label(self.cover,textvariable=self.percent).pack(side=LEFT,expand=NO,padx=5)
+        self.timeRem = StringVar()
+        Label(self.cover,textvariable=self.timeRem).pack(side=RIGHT,expand=NO,padx=5)
+        #'23 hours, 4 minutes, 15 seconds remaining'
 
         self.cover.pack(side=LEFT,expand=YES,fill=BOTH)
-        self.show_s.pack(side=RIGHT,expand=NO)
+        self.show_s.pack(side=RIGHT,expand=NO,padx=4)
         self.canv.pack(side=RIGHT,expand=NO,padx=4)
         
         self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
-        Label(self,bg='blue',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,anchor=W)        
+        Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
+        
+        
+        self.check_check()
+        self.sem.BEGIN()
 
 class MyDialog(Toplevel):
     '''

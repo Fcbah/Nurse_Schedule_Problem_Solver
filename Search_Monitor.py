@@ -150,7 +150,7 @@ class Search_Timer(Search.ab_Search):
         elif self.timer_state == ITE_CHANGED or self.timer_state == ENDED:
             return self.time_cp/self.get_ite() * (self.get_maxiter() - self.get_ite())
         else:
-            return None
+            return 0
     def get_time_remaining_el(self):
         '''
         In Seconds
@@ -161,7 +161,7 @@ class Search_Timer(Search.ab_Search):
         elif self.timer_state == ITE_CHANGED or self.timer_state == ENDED:
             return self.time_el/self.get_ite() * (self.get_maxiter() - self.get_ite())
         else:
-            return None
+            return 0
 
     def get_ite(self):
         '''
@@ -261,6 +261,13 @@ class Search_Timer(Search.ab_Search):
         + func(ite=0,nsp=None,*args,**kwargs)
         '''
         self._search_obj.on_play.append(func)
+    def add_on_extended(self,func):
+        '''
+        Adds a new event handler to the Search object's "on extended" event
+        + Triggered when the search's maxite is extended or reduced
+        + func(ite=0,nsp=None,extension=0,*args,**kwargs)
+        '''
+        self._search_obj.on_extended.append(func)
     def add_on_new_best(self,func):
         '''
         Adds a new event handler to the Search object's "on_new_best" event
@@ -340,11 +347,12 @@ def tost(time_s,show_milli=False):
         #print(win)        
         return '%02d:%02d %02d.%03d'%win
     else:
-        win = tuple(p_d_t(time_s,True))
+        win = tuple(p_d_t(time_s,False))
         ans = ''
         for k,x in enumerate(win):
             if x:
-                ans += '%d %s'%(x,plate[k])
+                ans += '%d %s '%(x,plate[k])
+        return ans
 
 def event_trigger(func_list,*args,**kwargs):
     for fxn in func_list:
@@ -363,9 +371,11 @@ class Search_Monitor(Search_Timer):
 
     def on_star(self,*args,**kwargs):
         self.add_info('%s search Begins'%self.name)
+        self.__standby_message = '... SEARCH ONGOING ...'
 
     def on_ended_(self,*args,**kwargs):
         self.add_info('%s search Ends'%self.name)
+        self.__standby_message = '... SEARCH UNCONFIGURED ...'
     
     def on_error(self,ite=0,msg='',*args,**kwargs):
         self.add_info('Error: %s found in %s search @ ite %s'%(msg,self.name,ite))
@@ -375,9 +385,13 @@ class Search_Monitor(Search_Timer):
     
     def on_pause(self,ite=0,*args,**kwargs):
         self.add_info('%s search paused @ ite %d'%(self.name,ite))
+        self.__standby_message = '... SEARCH PAUSED ...'
     
     def on_play(self,ite=0,*args,**kwargs):
         self.add_info('%s search resumes @ ite %d'%(self.name,ite))
+        self.__standby_message = '... SEARCH ONGOING ...'
+    def on_extended(self,ite=0,extension=0,*args,**kwargs):
+        self.add_info('%s search maximum is extended by %d @ ite %d'%(self.name,extension,ite))
 
     def on_ite_changed(self,ite=0,fx=[],fp=[],*args,**kwargs):        
         if isinstance(fx,np.ndarray):
@@ -390,7 +404,7 @@ class Search_Monitor(Search_Timer):
         Returns the mean of the obj_fxn on the population wherever it is finite
         Returns
         =======
-        Float, -1:Infinity, or None
+        Float, np.inf:Infinity, or None
         '''
         m = self.__fx
         if isinstance(m,np.ndarray):
@@ -398,14 +412,14 @@ class Search_Monitor(Search_Timer):
             if len(k):
                 return np.mean(k)
             else:
-                return -1 
+                return np.inf
 
     def get_mean_fp(self):
         '''
         Returns the mean of the obj_fxn of the population's __personal_best when it is available else it returns the mean of the obj_fxn and finite 
         Returns
         =======
-        Float,-1:infinity, or None
+        Float,np.inf:infinity, or None
         '''
         m = self.__fp
         if isinstance(m,np.ndarray):
@@ -413,7 +427,7 @@ class Search_Monitor(Search_Timer):
             if len(k):
                 return np.mean(k)
             else:
-                return -1
+                return np.inf
         else:
             return self.get_mean_fx()
 
@@ -426,8 +440,22 @@ class Search_Monitor(Search_Timer):
         time_cp =self.get_curr_search_time_cp()
         time_el =self.get_curr_time_el()
         self.infolist.append('%s @ cpu time:%s @ elapsed time:%s'%(message,tost(time_cp,True),tost(time_el,True)))
-        
+
+        self.set_curr_msg(message)
+
         nsp.trigger_on_new_info(message=message,time_cp=time_cp,time_el=time_el)
+    
+    def get_percent_complete(self):
+        '''
+        Simply Gets the quantitative state of the search in percentage.
+        Returns a float
+        '''
+        t = self.get_ite()
+        m = self.get_maxiter()
+        if m:
+            return t/m *100
+        else:
+            return 0
 
     def trigger_Search_centric_event(self):
         '''
@@ -437,20 +465,31 @@ class Search_Monitor(Search_Timer):
         self._search_obj.nsp.trigger_on_search_centric()
 
     def get_curr_message(self):
-        if (self.get_curr_time_el ()-self.__time_cur_set) < self.__cur_duration:
+        '''
+        It returns status messages that should be returned to the status bar. Decidded by both curr_msg and stanby_msg
+        '''
+        if (get_time_el()-self.__time_cur_set) < self.__cur_duration:
             return self.__curr_message
         else:
             return self.__standby_message
+    def set_curr_msg(self,message):
+        '''
+        Sets the temporal message and all its intricate TIMING DETAILS. It is automatically called by add_info so don't duplicate the call
+        '''
+        self.__curr_message = message
+        self.__time_cur_set = get_time_el()
             
     def __init__(self,search_obj,name):
         Search_Timer.__init__(self,search_obj)
         
         self.name = name
         self.infolist =[]
-        self.__curr_message = '__init__ inco' #it expires after
-        self.__time_cur_set =0 #This total elapsed time
+        
         self.__cur_duration =5 #in seconds
-        self.__standby_message='...Search Not Yet Started...' #also can be'...Searching...' '...paused...'
+        #self.__curr_message = '__init__ inco' #it expires after
+        #self.__time_cur_set = get_time_el() #This total elapsed time
+        self.set_curr_msg('__init__ inco')
+        self.__standby_message='... SEARCH NOT YET STARTED ...' #also can be'...Searching...' '...paused...'
 
         self.__fx=None
         self.__fp=None
@@ -466,6 +505,7 @@ class Search_Monitor(Search_Timer):
         self.add_on_pause(self.on_pause)
         self.add_on_play(self.on_play)
         self.add_on_ended(self.on_ended_)
+        self.add_on_extended(self.on_extended)
 
         #self.__on_new_info =[]
 

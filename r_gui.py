@@ -1041,7 +1041,7 @@ class fit_viewer(Frame):
 
         self.boil = IntVar()
         self.boil.set(0)
-        Checkbutton(self,text='Link with Constraints selector',variable=self.boil).pack(side=TOP,expand=NO,fill=X)
+        Checkbutton(self,text='Link with Viol select',variable=self.boil).pack(side=TOP,expand=NO,fill=X)
 
         self.canv = Canvas(self)        
         self.__wrap.pack(side=TOP,expand=NO,fill=X)        

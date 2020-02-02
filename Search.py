@@ -212,6 +212,9 @@ class Search(part_Holder,ab_Search):
             self.maxite = self.ite # this is because there is no way the system is going to update  the maxite again after this iteration
         elif self.ite == self.maxite:
             self.__stop = True
+        if tmp:
+            if self.on_extended:
+                Search.events(self.on_extended,ite=ite,nsp=self.nsp,extension=tmp)
         if self.on_ite_changed:
             Search.events(self.on_ite_changed,ite=ite,nsp=self.nsp,x=x,fx=fx,p=p,fp=fp)
         if self.on_aft_ite_changed:
@@ -431,11 +434,11 @@ class Search(part_Holder,ab_Search):
         else:
             raise TypeError('"nsp" must be a valid instance of "NSP"')
         
-        #self.show_mean = show_mean
+        #self.show_mean = show_mean#scrapped
 
-        self.ite=0
-        #self.fx_queue = Queue(1000)
-        #self.fp_queue = Queue(1000)
+        self.ite=0 #It is: b4start=0,start=0,initialized=0,1st_ite=1,...
+        #self.fx_queue = Queue(1000)#scrapped
+        #self.fp_queue = Queue(1000)#scrapped
         
         self.started = False
         self.ended = False
@@ -452,6 +455,7 @@ class Search(part_Holder,ab_Search):
         self.on_new_best=[]
         self.on_initialized=[]
         self.on_error=[]
+        self.on_extended=[]#introduced for search monitor
         self.on_ended=[]
         self.on_pause=[]
         self.on_play=[]
