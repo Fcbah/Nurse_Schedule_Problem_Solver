@@ -413,8 +413,8 @@ class Search_Monitor(Search_Timer):
             k = m[np.isfinite(m)]
             if len(k):
                 gh = np.mean(k)
-                if self._search_obj.fg and gh < self._search_obj.fg:
-                    pass
+                #if self._search_obj.fg and gh < self._search_obj.fg:
+                #    pass
                 return gh
             else:
                 return np.inf
@@ -432,7 +432,7 @@ class Search_Monitor(Search_Timer):
             if len(k):
                 gh = np.mean(k)
                 if self._search_obj.fg and gh < self._search_obj.fg:
-                    raise ValueError()
+                    raise ValueError()#This is what allowed me to track the on_new_best bug
                 return gh
             else:
                 return np.inf
