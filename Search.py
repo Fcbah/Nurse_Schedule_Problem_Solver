@@ -35,7 +35,7 @@ class part_Holder:
                 raise ValueError()
         else:
             raise TypeError()
-        return np.ndarray(y,dtype=int)# absence of this explicit conversion to int must have been the cause of most of my error since morning why H2,H3 and C5 's record no error checkable occurrence even though the fitness fxn value of C5 says
+        return np.array(y,dtype=int)# absence of this explicit conversion to int must have been the cause of most of my error since morning why H2,H3 and C5 's record no error checkable occurrence even though the fitness fxn value of C5 says
 
     def extr_aggreg_nurse(x,nurses_no,no_of_days):
         '''
