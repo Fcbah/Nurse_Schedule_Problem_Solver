@@ -1118,7 +1118,7 @@ class particle_selector(Frame):
             submen = Menu(self.men,tearoff=0)
             if isinstance(v, (Search.part_Holder,Search.ab_Search)):
                 r = v
-                for kk,vv in r.get_particles().items():
+                for kk,vv in r.get_particles().copy().items():#copy() added to avoid cross the thread problem of dictionary size change during iteration
                     submen.add_radiobutton(label=kk,value='%s%s%s'%(k,self.d,kk),variable=self.var,command=self.sel_change)
                 self.men.add_cascade(label=k, menu=submen)
             else:

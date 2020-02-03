@@ -412,7 +412,10 @@ class Search_Monitor(Search_Timer):
         if isinstance(m,np.ndarray):
             k = m[np.isfinite(m)]
             if len(k):
-                return np.mean(k)
+                gh = np.mean(k)
+                if self._search_obj.fg and gh < self._search_obj.fg:
+                    pass
+                return gh
             else:
                 return np.inf
 
@@ -427,7 +430,10 @@ class Search_Monitor(Search_Timer):
         if isinstance(m,np.ndarray):
             k = m[np.isfinite(m)]
             if len(k):
-                return np.mean(k)
+                gh = np.mean(k)
+                if self._search_obj.fg and gh < self._search_obj.fg:
+                    raise ValueError()
+                return gh
             else:
                 return np.inf
         else:
