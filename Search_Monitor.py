@@ -192,6 +192,8 @@ class Search_Timer(Search.ab_Search):
         return self._search_obj.can_pause()
     def can_play(self):
         return self._search_obj.can_play()
+    def playable(self):
+        return self._search_obj.playable()
     def can_extend(self):
         return self._search_obj.can_extend()    
 

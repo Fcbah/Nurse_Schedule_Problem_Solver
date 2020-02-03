@@ -42,6 +42,13 @@ class window(Frame):
             #dis.pack(side=TOP,expand=YES,fill=BOTH)
 
 class Top(Frame):
+    def new_search(self,searchable=None,**kwargs):
+        if isinstance(searchable,Sear_Moni.Search_Timer):
+            s = searchable
+            s.add_on_new_best(self.new_search)
+        self.left.fit_view.reset_fitness_lst()
+        self.left.part_select.on_part_holder_reset()
+        
     def __init__(self,master,nsp):
         if not isinstance(nsp,Prob.NSP):
             raise TypeError('"nsp"must be of type Prob.NSP')
@@ -51,8 +58,10 @@ class Top(Frame):
         self.nsp = nsp
         self.left = Left(self,nsp)       
         
-        #packing
+        #event handling
+        self.nsp.add_event_on_new_search(self.new_search)
 
+        #packing
         self.left.pack(side=LEFT,expand=NO,fill=Y)
         self.disp.pack(side=RIGHT,expand=YES,fill=BOTH)
 
@@ -169,6 +178,44 @@ class Bottom(Frame):
         self.percent.set('%d%%'%int(perc))
         self.timeRem.set('%s Remaining'%Sear_Moni.tost(timeRem))
 
+        kker = {'pl':self.sem.playable,'pa':self.sem.can_pause,'st':self.sem.can_stop,'pr':self.sem.can_extend,'ne':self.sem.can_extend}
+        for but in self.taaa:
+            if kker[but]():
+                self.buttons[but]['state'] = NORMAL
+            else:
+                self.buttons[but]['state'] = DISABLED
+            
+
+    def next_extend_maxite(self):
+        '''
+        Hook to the next button
+        '''
+        m =self.get_extent()
+        if m:
+            self.sem.EXTEND(m)
+
+    def prev_reduce_maxite(self):
+        '''
+        Hook to be prev button
+        '''
+        m = self.get_extent()
+        if m:
+            self.sem.EXTEND(-1*m)
+
+    def get_extent(self):
+        '''
+        Retrieves the integer entered in the prev button
+        It may return None if the value entered is invalid
+        '''
+        m = self.__extends.get()
+        try:
+            m = int(m)
+        except (ValueError, TypeError):
+                self.sem._search_obj.new_msg(self.sem.get_ite(),'error','extend variable must be a valid integer')
+        else:
+            self.__extends.set('')
+            return m
+
     def __init__(self,master,nsp):
         if isinstance(nsp,Prob.NSP):
             self.nsp = nsp
@@ -183,6 +230,7 @@ class Bottom(Frame):
 
         tuy = self.nsp.create_PSO_search(100,500,Fitness_fxn=f_fxn)
         self.sem = Sear_Moni.Search_Monitor(tuy,'under build')
+        self.nsp.start_new_search(self.sem)
         
         self.Removable = Frame(self)
         
@@ -192,15 +240,19 @@ class Bottom(Frame):
         
         _wrap = Frame(self.cover)
         self.photos = {'pl':PhotoImage(file='icons/play.png'),'pa':PhotoImage(file='icons/pause.png'),'st':PhotoImage(file='icons/stop.png'),'pr':PhotoImage(file='icons/prev.png'),'ne':PhotoImage(file='icons/next.png')}
-        taaa = ('pl','pa','st','pr','ne')
+        self.taaa = ('pl','pa','st','pr','ne')
         descrp = {'pl':'To begin a Search or Play after a Pause','pa':'To pause an ongoing search','st':'To stop an ongoing search','pr':'This is to reduce the maximum iteration of the search by the number entered here','ne':'To extend the maximum iteration of the search by whatever number entered here'}
-        for but in taaa:
-            t = Button(_wrap,image=self.photos[but])
+        command = {'pl':self.sem.PLAY,'pa':self.sem.PAUSE,'st':self.sem.STOP,'pr':self.prev_reduce_maxite,'ne':self.next_extend_maxite}
+        self.__extends=StringVar()
+        self.__extends.set('')
+        self.buttons ={}
+        for but in self.taaa:
+            t = Button(_wrap,image=self.photos[but],command=command[but])
             t.pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
             gg.CreateToolTip(t,descrp[but],wrap_length=1000)
-
+            self.buttons[but]=t
             if but=='pr':
-                Entry(_wrap,width=8).pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
+                Entry(_wrap,width=8,textvariable=self.__extends).pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
         #Section 2
         self.canv = Canvas(self.Removable)
         self.canv.configure(width=284,height=100)
@@ -224,7 +276,6 @@ class Bottom(Frame):
         
         self.status = StringVar()
         
-
         #1 attach ite,maxiter,mean,current_time,TimeRemaining and progressbar to check events
         #2 attach validity check to search_centric events. This also works by setting flags.
         #3 attach statusbar to addinfo event.All what addinfo does is set a flag to update control status. so any new flag set while this is done is not having any effect. the normal routine check now does the update.
@@ -245,10 +296,9 @@ class Bottom(Frame):
         
         self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
         Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
-        
-        
+                
         self.check_check()
-        self.sem.BEGIN()
+        #self.sem.BEGIN()
 
 class MyDialog(Toplevel):
     '''

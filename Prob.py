@@ -95,7 +95,7 @@ class NSP(part_Holder):
             return True
         return False
 
-    def start_new_search(self,Searchable,begin=True):
+    def start_new_search(self,Searchable,begin=False):
         '''
         This attaches the input search object to a nursing schedule problem
         and 
@@ -105,6 +105,7 @@ class NSP(part_Holder):
                 if self.curr_search:
                     self.prev_searches['%dth search'%len(self.prev_searches)] = self.curr_search                
                 self.curr_search = Searchable
+                event_trigger(self.__on_new_search,Searchable)
                 if begin:
                     Searchable.BEGIN()
             else:
@@ -236,7 +237,11 @@ class NSP(part_Holder):
         '''
         if func:
             self.__on_search_centric.append(func)
-
+    def add_event_on_new_search(self,func):
+        '''
+        '''
+        if func:
+            self.__on_new_search.append(func)
     def trigger_on_new_info(self,*args,**kwargs):
         '''
         Allows external objects or internal (mostly Search_Monitor) to trigger a new info show up to our subscribers
@@ -262,6 +267,7 @@ class NSP(part_Holder):
         #events
         self.__on_new_info = []
         self.__on_search_centric =[]
+        self.__on_new_search = []
 
         self.__nsp__ = dict(no_of_days=no_of_days,nurses_no=nurses_no,experienced_nurses_no=experienced_nurses_no)
         self.__arg_const__= dict(max_night_per_nurse=max_night_per_nurse,preference=preference,min_experienced_nurse_per_shift=min_experienced_nurse_per_shift,min_night_per_nurse=min_night_per_nurse)

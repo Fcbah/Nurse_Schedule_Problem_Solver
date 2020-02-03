@@ -14,7 +14,29 @@ class part_Holder:
     extr_aggreg_no_of_days(x,nurses_no,no_of_days): ndarray
     extr_aggreg(x,a,nurses_no,no_of_days): ndarray
     '''
-    
+    def transform_to_int(x):
+        '''
+        It transforms a particle in float form (PSO) to integer form (normal/genetic algorithm)
+        '''
+        if isinstance(x,np.ndarray):
+            y = x.copy()
+            if y.dtype == float:
+                o = np.logical_and(y>=0, y<1)
+                y[o] = 0
+                m = np.logical_and(y>=1, y<2)
+                y[m] =1
+                e = np.logical_and(y>=2, y<=3)
+                y[e] =2
+                n = np.logical_and(y>3, y<=4)
+                y[n] = 3
+            elif y.dtype == int:
+                pass
+            else:
+                raise ValueError()
+        else:
+            raise TypeError()
+        return y
+
     def extr_aggreg_nurse(x,nurses_no,no_of_days):
         '''
         =Class=
@@ -72,6 +94,8 @@ class part_Holder:
         Return pointer to the objective function for a search
         '''
         return self.fitt.obj_fxn
+    def get_particles(self):
+        return self.particles
     
     def __init__(self,Fitness,particles={}):
         
@@ -339,23 +363,23 @@ class Search(part_Holder,ab_Search):
         '''
         ==priv=inh=ext==
         '''
-        return not(self.__extend or self.__stop)
+        return self.started and not(self.__extend or self.__stop)
     def can_stop(self):
         '''
         ==priv=inh=ext==
         '''
-        return not self.__stop
+        return self.started and (not self.__stop)
     def can_pause(self):
         '''
         ==priv=inh=ext==
         '''
-        return self.playState and (not self.__stop)
+        return self.started and self.playState and (not self.__stop)
     def can_play(self):
         '''
         This is different from self.playable
         ==priv=inh=ext==
         '''
-        return not (self.playState or self.__stop)
+        return self.started and not (self.playState or self.__stop)
     
     def playable(self):
         '''
@@ -388,7 +412,9 @@ class Search(part_Holder,ab_Search):
     def get_ite(self):
         return self.ite
     def get_maxiter(self):
-        return self.maxite    
+        return self.maxite
+    def get_fitt(self):
+        return self.fitt    
     def get_particles(self):
         '''
         This gives the particles cached by the Super Class "part_Holder" which are the global bests encountered during the search

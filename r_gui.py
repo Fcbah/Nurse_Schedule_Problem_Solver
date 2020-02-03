@@ -124,9 +124,20 @@ class particle_display(Frame):
     '''
     def _conv(x):
         '''
-        Converts an INTEGER [0,4) to its equivalent representation on the nurse schedule
+        Converts an INTEGER [0,4) or FLOAT [0,4] to its equivalent representation on the nurse schedule
         '''
         m = {0:'O',1:'M',2:'E',3:'N'}
+        if type(x) == float:
+            if 0 <= x < 1:
+                x=0
+            elif x<2:
+                x=1
+            elif x<=3:
+                x=2
+            elif x<=4:
+                x=3
+            else:
+                raise ValueError()
         return m[x]
 
     def _get_extD_loc(self,i=0,j=0):
@@ -329,14 +340,18 @@ class particle_display(Frame):
         ==ext==
         Sets the particle to a 1D numpy array
         '''
-        if isinstance(x,np.ndarray):
-            self.particle = x
+        if isinstance(x,np.ndarray):           
             
             self.extD_matrix = Search.part_Holder.extr_aggreg_days(x,self.problem.get_nurses_no(),self.problem.get_no_of_days())
             
             self.extN_matrix = Search.part_Holder.extr_aggreg_nurse(x,self.problem.get_nurses_no(),self.problem.get_no_of_days())
             
             self.exp_extD_matrix = Search.part_Holder.extr_aggreg_days(x,self.problem.get_nurses_no(),self.problem.get_no_of_days(),self.problem.get_experienced_nurses_no())
+
+            if x.dtype == float:
+                x = Search.part_Holder.transform_to_int(x)
+
+            self.particle = x
 
             #useless to enforce screen draw because violation calculations need to be recalculated
             #self.wipe_all_screen()
@@ -486,6 +501,7 @@ class particle_display(Frame):
         shp = self._get_nsp_shape()
 
         xx = np.reshape(self.particle,shp)
+        
         xx = np.transpose(xx)
         shp= xx.shape
 
@@ -937,7 +953,7 @@ class fit_viewer(Frame):
         #update list
         #set list selected fitness
         self.refill_list(self.nsp.get_all_fitness().items())
-        self.list_w.selection_clear()
+        self.list_w.selection_clear(0,END)
         self.list_w.selection_set(0)
         #tooltip wil be adjusted automatically
         self.event_generate(self.lst_reset)
@@ -1090,7 +1106,7 @@ class particle_selector(Frame):
 
         m = nsp.get_all_part_holder().copy().popitem()
         k,v = m[0],m[1]
-        kk = v.particles.copy().popitem()[0]
+        kk = v.get_particles().copy().popitem()[0]
         self.ext_part_set(k,kk)
 
     def build_menu(self):
@@ -1100,9 +1116,9 @@ class particle_selector(Frame):
         #any event that would need to use a model object will have
         for k,v in self.nsp.get_all_part_holder().items():
             submen = Menu(self.men,tearoff=0)
-            if isinstance(v,Search.part_Holder):
+            if isinstance(v, (Search.part_Holder,Search.ab_Search)):
                 r = v
-                for kk,vv in r.particles.items():
+                for kk,vv in r.get_particles().items():
                     submen.add_radiobutton(label=kk,value='%s%s%s'%(k,self.d,kk),variable=self.var,command=self.sel_change)
                 self.men.add_cascade(label=k, menu=submen)
             else:
@@ -1135,7 +1151,7 @@ class particle_selector(Frame):
         +kk: is the key for the selected particle
         '''
         self.txt.set(kk)
-        self.selected_particle = self.nsp.get_all_part_holder()[k].particles[kk]
+        self.selected_particle = self.nsp.get_all_part_holder()[k].get_particles()[kk]
         self.event_generate(self.part_sel_changed)
 
 
