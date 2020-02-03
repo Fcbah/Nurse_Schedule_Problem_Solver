@@ -33,7 +33,6 @@ class window(Frame):
             self.bot.pack(side=BOTTOM,expand=NO,fill=X)
             self.top.pack(side=TOP,expand=YES,fill=BOTH)
             
-
             dis = self.top.disp
             p =r.particles.copy().popitem()[1]
             dis.set_particle(p)
@@ -46,9 +45,14 @@ class Top(Frame):
         if isinstance(searchable,Sear_Moni.Search_Timer):
             s = searchable
             s.add_on_new_best(self.new_search)
+        
+        #To avoid all the cross thread errors I am experiencing
+        self.after(2,self.t_new_search)
+        
+    def t_new_search(self):
         self.left.fit_view.reset_fitness_lst()
         self.left.part_select.on_part_holder_reset()
-        
+
     def __init__(self,master,nsp):
         if not isinstance(nsp,Prob.NSP):
             raise TypeError('"nsp"must be of type Prob.NSP')
