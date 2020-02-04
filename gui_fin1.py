@@ -159,6 +159,7 @@ class Bottom(Frame):
         maxit=self.sem.get_maxiter()#maximum iteration
         mean_x=self.sem.get_mean_fx()
         mean_p =self.sem.get_mean_fp()
+        fg = self.sem._search_obj.fg
         stat= self.sem.get_curr_message()
         perc= self.sem.get_percent_complete()
         timeRem = self.sem.get_time_remaining_el()
@@ -169,13 +170,17 @@ class Bottom(Frame):
         self.maxit.set('%d'%maxit)
         
         if mean_x:
-            self.mean_x.set('%.5f'%mean_x)
+            self.mean_x.set('%.7f'%mean_x)
         else:
             self.mean_x.set('Not_Set')
         if mean_p:
-            self.mean_p.set('%.5f'%mean_p)
+            self.mean_p.set('%.7f'%mean_p)
         else:
             self.mean_p.set('Not_Set')
+        if fg:
+            self.fg_s.set('%.7f'%fg)
+        else:
+            self.fg_s.set('Not_Set')
 
         self.status.set('%s'%stat) #'SEARCH UNCONFIGURED' ...SEARCH NOT YET STARTED...
 
@@ -229,6 +234,8 @@ class Bottom(Frame):
         
         Frame.__init__(self,master)
 
+        PSO_search(nsp,self)
+
         newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0,C4B=1,C5=1,C6=1)
         f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, It tries to consider all the fine grained fitness fxns, that would make the problem space easily transitable C1 4,C2A 2,C2A1 1,C2B 2,C2B1 2,C3 1,C4 0,C4B 1,C5 1,C6 1",const_fxns=self.nsp.soft_con_dict,weights=newWeight)
 
@@ -268,15 +275,18 @@ class Bottom(Frame):
         self.maxit= StringVar()
         self.mean_x = StringVar()
         self.mean_p = StringVar()
+        self.fg_s = StringVar()
         Label(self.show_s,text='Iteration: ',font=('Verdana',11)).grid(row=0,column=0,sticky=E)
         Label(self.show_s,text='Max iteration: ').grid(row=1,column=0,sticky=E)
         Label(self.show_s,text='Population Mean: ').grid(row=2,column=0,sticky=E)
         Label(self.show_s,text='P_Best Mean: ').grid(row=3,column=0,sticky=E)
+        Label(self.show_s,text='G_Best: ').grid(row=4,column=0,sticky=E)
 
         Label(self.show_s,textvariable=self.it).grid(row=0,column=1,sticky=W)
         Label(self.show_s,textvariable=self.maxit).grid(row=1,column=1,sticky=W)
         Label(self.show_s,textvariable=self.mean_x).grid(row=2,column=1,sticky=W)
         Label(self.show_s,textvariable=self.mean_p).grid(row=3,column=1,sticky=W)
+        Label(self.show_s,textvariable=self.fg_s).grid(row=4,column=1,sticky=W)
         
         self.status = StringVar()
         
@@ -439,6 +449,66 @@ class get_dict(MyDialog):
     
     def apply(self):
         self.result = self.storing
+
+class PSO_search(MyDialog):
+    def Fit_txt(self):
+        kam=''
+        for item,val in self.newWeight:
+            kam += '%s %s, '%(item,val)
+        return kam
+
+    def __init__(self,nsp,parent):
+
+        if isinstance(nsp,Prob.NSP):
+            self.nsp = nsp
+        self.newWeight = dict(C1=4,C2A=4,C2A1=0,C2B=0,C2B1=0,C3=1,C4=0,C4B=1,C5=1,C6=1)
+        lst = ('search name','population size','maximum iteration','omega','phip','phig','Fitness fxn')
+        self.default = {'search name':'Unknown','population size':500, 'maximum iteration':500, 'omega':0.5, 'phip':0.5, 'phig':0.5, 'Fitness_fxn':self.newWeight}
+        self.description ={'search name':'The name you want your search to be called',
+        'population size':'This is the number of particles you want to use to carry out the search', 
+        'maximum iteration':'This is the number of times you want the search routine to be carried out',
+        'omega':"This controls the weight and influence of the particle's velocity on its next position",
+        'phip':"This controls the weight and influence of the partcle's personal best position on its next position", 
+        'phig':"This controls the weight and influence of the search's global best position on its next position",
+        'Fitness_fxn':"This controls the weight of soft constraints for evaluation the fitness of particles during the particle's run"}
+
+        MyDialog.__init__(self,parent,title='Configure a PSO Search')
+        
+    def set_weight(self):
+        s = MyDialog()
+        self.newWeight = s.result
+        self.fit_l.set(self.Fit_txt())
+
+    def body(self,master):
+        for i,(item,value) in enumerate(self.default.items()):
+            f =Label(master,text = item)
+            f.grid(row=i,column=0)
+            l = StringVar()
+            l.set(value)
+            if self.description:
+                gg.CreateToolTip(f,self.description[item],wait_time=10)
+            if item == 'Fitness fxn':
+                l.set(self.Fit_txt())
+                Entry(master,textvariable=l,state=DISABLED).grid(row=i,column=1)
+                Button(master,text='Adjust Fitness Weights',command=self.set_weight)
+                self.fit_l = l
+            else:
+                k[item]= l
+        self.stori = k
+
+    def apply(self):
+        f_fxn = f.Fitness_Fxn(self.nsp,"""This is type of Fitness fxn whose fitness is 
+        obtained from the wieghted mean of other fitness fxns,%s"""%self.Fit_txt(),
+        const_fxns=self.nsp.soft_con_dict,weights=self.newWeight)
+        searc = self.nsp.create_PSO_search(self.stori['population size'],self.stori['maximum iteration'],w =self.stori['omega'],c1 = self.stori['phip'],c2 = self.stori['phig'],Fitness_fxn=f_fxn)
+        self.result = Sear_Moni.Search_Monitor(searc,self.stori['search name'])
+
+        #lst = ('search name','population size','maximum iteration','omega','phip','phig','Fitness fxn')
+        #newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0,C4B=1,C5=1,C6=1)
+        #f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, It tries to consider all the fine grained fitness fxns, that would make the problem space easily transitable C1 4,C2A 2,C2A1 1,C2B 2,C2B1 2,C3 1,C4 0,C4B 1,C5 1,C6 1",const_fxns=self.nsp.soft_con_dict,weights=newWeight)
+        #tuy = self.nsp.create_PSO_search(100,500,Fitness_fxn=f_fxn)
+        #self.sem = Sear_Moni.Search_Monitor(tuy,'under build')
+        #self.nsp.start_new_search(self.sem)
 
 a = Tk()
 a.wm_title('Nursing Schedule Problem')
