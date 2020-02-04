@@ -104,8 +104,8 @@ DORMANT = 'dormant'
 OKAY = 'active'
 
 class Bottom(Frame):
-    def disp_to_get_search(self):
-        self.clear_screen()    
+    #def disp_to_get_search(self):
+        #self.clear_screen()    
     #def alert_search(self):
     #    self.event_generate(self.new_search_created)
     def clear_canv(self):
@@ -118,38 +118,40 @@ class Bottom(Frame):
         self.gid = self.after(100,self.check_check)
         pass
     def draw_canvas(self):
-        self.clear_canv
-        x_len = 140
-        y_len = 30
-        font = ('Times New Roman',12)
-        a =2
-        a00 = a,a,a+x_len,a + y_len
-        a10=a,a+y_len,a +x_len,a+ 2*y_len
-        a01 = a+x_len,a,a+2*x_len,a+ y_len
-        a11 = a+x_len,a+y_len,a+2*x_len,a+2*y_len
-        a20 = a,a+2*y_len,a+x_len,a+3*y_len
-        a21 = a+x_len,a+2*y_len,a+2*x_len,a+3*y_len
+        if self.state != DANGLING:
+            self.clear_canv()
+            x_len = 140
+            y_len = 30
+            font = ('Times New Roman',12)
+            a =2
+            a00 = a,a,a+x_len,a + y_len
+            a10=a,a+y_len,a +x_len,a+ 2*y_len
+            a01 = a+x_len,a,a+2*x_len,a+ y_len
+            a11 = a+x_len,a+y_len,a+2*x_len,a+2*y_len
+            a20 = a,a+2*y_len,a+x_len,a+3*y_len
+            a21 = a+x_len,a+2*y_len,a+2*x_len,a+3*y_len
 
-        t1 = Sear_Moni.tost(self.sem.get_curr_search_time_cp(),show_milli=True)#'00:10 33.158' #cpu time
-        t2 = Sear_Moni.tost(self.sem.get_curr_time_el(),True)#'00:14 49.058' #wall time
-        t3 = Sear_Moni.tost(self.sem.get_time_remaining_cp(),True)#'00:20 22.498'#cpu time rem
-        t4 = Sear_Moni.tost(self.sem.get_time_remaining_el(),True)#'00:23 45.358' #wall time rem
+            t1 = Sear_Moni.tost(self.sem.get_curr_search_time_cp(),show_milli=True)#'00:10 33.158' #cpu time
+            t2 = Sear_Moni.tost(self.sem.get_curr_time_el(),True)#'00:14 49.058' #wall time
+            t3 = Sear_Moni.tost(self.sem.get_time_remaining_cp(),True)#'00:20 22.498'#cpu time rem
+            t4 = Sear_Moni.tost(self.sem.get_time_remaining_el(),True)#'00:23 45.358' #wall time rem
 
-        self.canv.create_rectangle(*a00,tags=('all','rect'))
-        self.canv.create_rectangle(*a10,fill='green',tags=('all','rect'))
-        self.canv.create_rectangle(*a01,tags=('all','rect'))
-        self.canv.create_rectangle(*a11,fill='green',tags=('all','rect'))
-        self.canv.create_rectangle(*a20,fill='red',tags=('all','rect'))
-        self.canv.create_rectangle(*a21,fill='red',tags=('all','rect'))   
+            self.canv.create_rectangle(*a00,tags=('all','rect'))
+            self.canv.create_rectangle(*a10,fill='green',tags=('all','rect'))
+            self.canv.create_rectangle(*a01,tags=('all','rect'))
+            self.canv.create_rectangle(*a11,fill='green',tags=('all','rect'))
+            self.canv.create_rectangle(*a20,fill='red',tags=('all','rect'))
+            self.canv.create_rectangle(*a21,fill='red',tags=('all','rect'))   
 
-        self.canv.create_text(a00[0] +x_len/2, a00[1]+y_len/2,text='CPU Time',tags=('all','text'))
-        self.canv.create_text(a01[0] +x_len/2, a01[1] + y_len/2,text='Wall Time',tags=('all','text'))
+            self.canv.create_text(a00[0] +x_len/2, a00[1]+y_len/2,text='CPU Time',tags=('all','text'))
+            self.canv.create_text(a01[0] +x_len/2, a01[1] + y_len/2,text='Wall Time',tags=('all','text'))
 
-        self.canv.create_text(a10[0]+x_len/2, a10[1]+y_len/2,font = font,text='%s'%t1,fill='white',tags=('all','text'))
-        self.canv.create_text(a11[0]+x_len/2, a11[1]+y_len/2,font = font,text='%s'%t2,fill='white',tags=('all','text'))
+            self.canv.create_text(a10[0]+x_len/2, a10[1]+y_len/2,font = font,text='%s'%t1,fill='white',tags=('all','text'))
+            self.canv.create_text(a11[0]+x_len/2, a11[1]+y_len/2,font = font,text='%s'%t2,fill='white',tags=('all','text'))
 
-        self.canv.create_text(a20[0]+x_len/2, a20[1]+y_len/2,font = font,text='%s'%t3,fill='white',tags=('all','text'))
-        self.canv.create_text(a21[0]+x_len/2, a21[1]+y_len/2,font = font,text='%s'%t4,fill='white',tags=('all','text'))   
+            self.canv.create_text(a20[0]+x_len/2, a20[1]+y_len/2,font = font,text='%s'%t3,fill='white',tags=('all','text'))
+            self.canv.create_text(a21[0]+x_len/2, a21[1]+y_len/2,font = font,text='%s'%t4,fill='white',tags=('all','text'))   
+    
     def set_show_s(self):
         '''
         sets 
@@ -241,6 +243,7 @@ class Bottom(Frame):
         res()# I have to always create an instance of this. I can't always call it that way.
         #But by implementing a __call__ I have given an opportunity to edit intrinsic parameters externally before opening the dialogs
         
+        #print('RESULT IS THIS ',res.result) #USED TO TRACK AN ERROR {...self.canv not defined...}
         if res.result:
             storing = res.result
             pop,maxite,w,c1,c2 = storing['population size'],storing['maximum iteration'],storing['omega'],storing['phip'],storing['phig']
@@ -250,12 +253,37 @@ class Bottom(Frame):
 
             f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
             tuy = self.nsp.create_PSO_search(pop,maxite,w,c1,c2,Fitness_fxn=f_fxn)
-            self.sem = Sear_Moni.Search_Monitor(tuy,name)        
-            self.nsp.start_new_search(self.sem)
+            self.attach_new_search(Sear_Moni.Search_Monitor(tuy,name))
+            
+    def attach_new_search(self,sea_Moni):
+        '''
+        This does all the underground work of attaching a new Search Monitor object to the nsp, sem,
+        setting the state,binding to on_ended, unpacking and repacking.....
+        '''
+        self.sem = sea_Moni
+        self.nsp.start_new_search(sea_Moni)
+        self.bind_sem()
+        
+        #print ('ENTERED') #USED TO TRACK AN ERROR
+        if (self.state == DORMANT) or (self.state == DANGLING):
+            if self.state == DORMANT:
+                self.state = ACTIVE
+                #self.unpack_requestor
+                #self.pack_intern
+                pass
+            elif self.state == DANGLING:
+                self.state = ACTIVE
+                #if (self.state != DANGLING) or (self.state != DORMANT):
+                #self.unpack_first_requester
+                self.start_create_n_pack()
 
-            self.state = ACTIVE
-            if (self.state != DANGLING) or (self.state != DORMANT):
-                self.start_pack()
+    def bind_sem(self):
+        self.sem.add_on_ended(self.on_search_end)
+    
+    def on_search_end(self,*args,**kwargs):
+        self.state = DORMANT
+        #self.unpack_intern
+        #self.pack_requestor
 
     def __init__(self,master,nsp):
         if isinstance(nsp,Prob.NSP):
@@ -268,7 +296,8 @@ class Bottom(Frame):
 
         #self.get_pso_search()
         self.Removable = Frame(self)
-
+        
+        #self.pack_first_requestor
         self.get_pso_search()
 
         self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
@@ -283,7 +312,11 @@ class Bottom(Frame):
         self.l2.pack(side=RIGHT,expand=NO,padx=5)
         self.l1.pack(side=LEFT,expand=NO,padx=5)
     
-    def start_pack(self):
+    def start_create_n_pack(self):
+        '''
+        It is called after all the search objects are already attached first time after the Bottom widget's creation
+        Creates all the full widget set and packs them
+        '''
         #section 1
         self.cover = Frame(self.Removable)
         self.prog = Progressbar(self.cover,mode='determinate',maximum=1000,value=100)
