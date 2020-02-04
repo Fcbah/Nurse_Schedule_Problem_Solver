@@ -234,13 +234,16 @@ class Bottom(Frame):
         
         Frame.__init__(self,master)
 
-        PSO_search(nsp,self)
+        res = PSO_search(nsp,self)
+        storing = res.result
+        name = res.name
+        newWeight = res.newWeight
+        fit_txt = res.Fit_txt()
+        #del(res)
 
-        newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0,C4B=1,C5=1,C6=1)
-        f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, It tries to consider all the fine grained fitness fxns, that would make the problem space easily transitable C1 4,C2A 2,C2A1 1,C2B 2,C2B1 2,C3 1,C4 0,C4B 1,C5 1,C6 1",const_fxns=self.nsp.soft_con_dict,weights=newWeight)
-
+        f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
         tuy = self.nsp.create_PSO_search(100,500,Fitness_fxn=f_fxn)
-        self.sem = Sear_Moni.Search_Monitor(tuy,'under build')
+        self.sem = Sear_Moni.Search_Monitor(tuy,name)        
         self.nsp.start_new_search(self.sem)
         
         self.Removable = Frame(self)
@@ -453,7 +456,7 @@ class get_dict(MyDialog):
 class PSO_search(MyDialog):
     def Fit_txt(self):
         kam=''
-        for item,val in self.newWeight:
+        for item,val in self.newWeight.items():
             kam += '%s %s, '%(item,val)
         return kam
 
@@ -480,6 +483,7 @@ class PSO_search(MyDialog):
         self.fit_l.set(self.Fit_txt())
 
     def body(self,master):
+        k={}
         for i,(item,value) in enumerate(self.default.items()):
             f =Label(master,text = item)
             f.grid(row=i,column=0)
@@ -487,21 +491,45 @@ class PSO_search(MyDialog):
             l.set(value)
             if self.description:
                 gg.CreateToolTip(f,self.description[item],wait_time=10)
-            if item == 'Fitness fxn':
+            if item == 'Fitness_fxn':
                 l.set(self.Fit_txt())
-                Entry(master,textvariable=l,state=DISABLED).grid(row=i,column=1)
-                Button(master,text='Adjust Fitness Weights',command=self.set_weight)
+                Entry(master,textvariable=l).grid(row=i,column=1)
+                Button(master,text='Adjust Fitness Weights',command=self.set_weight).grid(row=i,column=2)
                 self.fit_l = l
             else:
+                Entry(master,textvariable=l).grid(row=i,column=1)
                 k[item]= l
         self.stori = k
 
+    def validate(self):
+        tie = ''
+        self.storing = {}
+        for item,value in self.default.items():
+            try:
+                if type(value) == int:
+                    tie = 'integer'
+                    er = int(self.stori[item].get())
+                    self.storing[item] = er
+                elif type(value) == float:
+                    tie = 'integer'
+                    er = float(self.stori[item].get())
+                    self.storing[item] = er
+            except ValueError as qi:
+                p.showerror('Invalid Value Entered','%s must be in %s format'%(item,tie))
+                return 0
+                
+        return 1
+                
     def apply(self):
         f_fxn = f.Fitness_Fxn(self.nsp,"""This is type of Fitness fxn whose fitness is 
         obtained from the wieghted mean of other fitness fxns,%s"""%self.Fit_txt(),
         const_fxns=self.nsp.soft_con_dict,weights=self.newWeight)
-        searc = self.nsp.create_PSO_search(self.stori['population size'],self.stori['maximum iteration'],w =self.stori['omega'],c1 = self.stori['phip'],c2 = self.stori['phig'],Fitness_fxn=f_fxn)
-        self.result = Sear_Moni.Search_Monitor(searc,self.stori['search name'])
+        #searc = self.nsp.create_PSO_search(self.storing['population size'],self.storing['maximum iteration'],w =self.storing['omega'],c1 = self.storing['phip'],c2 = self.storing['phig'],Fitness_fxn=f_fxn)# It is tremendiously slowing this work from 4mins to 25mins I dont even understand
+        #self.result = Sear_Moni.Search_Monitor(searc,self.stori['search name'].get())
+
+        self.result = self.storing
+        self.name = self.stori['search name'].get()
+        #self.newWeight = self.newWeight#tautology
 
         #lst = ('search name','population size','maximum iteration','omega','phip','phig','Fitness fxn')
         #newWeight = dict(C1=4,C2A=2,C2A1=1,C2B=2,C2B1=2,C3=1,C4=0,C4B=1,C5=1,C6=1)
