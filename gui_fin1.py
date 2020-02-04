@@ -19,7 +19,7 @@ class window(Frame):
         arg_dict = dict(no_of_days=14,nurses_no=10,experienced_nurses_no=4,max_night_per_nurse='3/14',preference='4,2,2,2',min_experienced_nurse_per_shift=1,min_night_per_nurse='3/14')
         arg_err  = dict(no_of_days=int,nurses_no=int,experienced_nurses_no=int,max_night_per_nurse=float,preference=(tuple,int),min_experienced_nurse_per_shift=int,min_night_per_nurse=float)
         arg_descrp = dict(no_of_days='This is the number of days the schedule is expected to cover (int)',nurses_no='This is the total number of nurses in the hospital (int)',experienced_nurses_no='This is the number of experienced nurses in the hospital. It must be less than "nurses_no" (int)',max_night_per_nurse='This sets the maximum number of night shifts each nurses could be given. It is a hard constraint. It must be expressed as e.g. 3/14 which implies a maximum of 3 night shift in 2 weeks (14 days).(float)',preference='This is the minimum preference for each day. e.g. "4,2,2,2" will mean a minimum of 4 nurses on OFF, 2 on MORNING, 2 on EVENING and 2 on NIGHT shifts must be met for each of the schedule days - (tuple, ints)',min_experienced_nurse_per_shift='This sets the minimum number of experienced nurses that should be available for each of the "WORKING" shifts which are the Morning(M), Evening (E) and Night(N) shifts',min_night_per_nurse='This sets the minimum number of night shifts expected to be allocated to each of the nurses')
-        w = get_dict(a,arg_dict,arg_err,arg_descrp)
+        w = get_dict(a,defaut=arg_dict,types=arg_err,description=arg_descrp)
         arg_dict = w.result
         
         if arg_dict:
@@ -410,13 +410,13 @@ class MyDialog(Toplevel):
         pass
 
 class get_dict(MyDialog):
-    def __init__(self,parent,defaut=dict(),types=dict(),description=dict()):
+    def __init__(self,parent,title ="Parameters for the Nursing Schedule Problem", defaut=dict(),types=dict(),description=dict()):
         self.defaut = defaut
         self.description= description
         self.types = types
         self.storing ={}
         self.stori={}
-        MyDialog.__init__(self,parent,"Parameters for the Nursing Schedule Problem")
+        MyDialog.__init__(self,parent,title=title)
         
         
     def body(self,master):
@@ -478,7 +478,12 @@ class PSO_search(MyDialog):
         MyDialog.__init__(self,parent,title='Configure a PSO Search')
         
     def set_weight(self):
-        s = MyDialog()
+        descri = {'C1':self.nsp.C1.description,'C2A':self.nsp.C2A.description,
+        'C2A1':self.nsp.C2A1.description,'C2B':self.nsp.C2B.description,
+        'C2B1':self.nsp.C2B1.description,'C3':self.nsp.C3.description,'C4':self.nsp.C4.description,
+        'C4B':self.nsp.C4B.description,'C5':self.nsp.C5.description,'C6':self.nsp.C6.description}
+        ttypes = {'C1':int,'C2A':int,'C2A1':int,'C2B':int,'C2B1':int,'C3':int,'C4':int,'C4B':int,'C5':int,'C6':int}
+        s = get_dict(self,title='getting fitness function weights',defaut=self.newWeight,types=ttypes,description=descri)
         self.newWeight = s.result
         self.fit_l.set(self.Fit_txt())
 
