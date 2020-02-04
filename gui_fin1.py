@@ -247,7 +247,22 @@ class Bottom(Frame):
         self.nsp.start_new_search(self.sem)
         
         self.Removable = Frame(self)
+        self.status = StringVar()
         
+        self.start_pack()
+        
+        self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
+        Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
+                
+        self.check_check()
+        #self.sem.BEGIN()
+    def pack_intern(self):
+        self.prog.pack(side=TOP,expand=NO,fill=X)        
+        _wrap.pack(side=BOTTOM,expand=NO,fill=X)
+        self.l2.pack(side=RIGHT,expand=NO,padx=5)
+        self.l1.pack(side=LEFT,expand=NO,padx=5)
+    
+    def start_pack(self):
         #section 1
         self.cover = Frame(self.Removable)
         self.prog = Progressbar(self.cover,mode='determinate',maximum=1000,value=100)
@@ -291,31 +306,25 @@ class Bottom(Frame):
         Label(self.show_s,textvariable=self.mean_p).grid(row=3,column=1,sticky=W)
         Label(self.show_s,textvariable=self.fg_s).grid(row=4,column=1,sticky=W)
         
-        self.status = StringVar()
-        
         #1 attach ite,maxiter,mean,current_time,TimeRemaining and progressbar to check events
         #2 attach validity check to search_centric events. This also works by setting flags.
         #3 attach statusbar to addinfo event.All what addinfo does is set a flag to update control status. so any new flag set while this is done is not having any effect. the normal routine check now does the update.
         #4 Hook up to on ended so as to wipe out the screen and give options
 
         #packing
-        self.prog.pack(side=TOP,expand=NO,fill=X)        
-        _wrap.pack(side=BOTTOM,expand=NO,fill=X)
+        
         self.percent = StringVar()
-        Label(self.cover,textvariable=self.percent).pack(side=LEFT,expand=NO,padx=5)
+        self.l1 =Label(self.cover,textvariable=self.percent)
         self.timeRem = StringVar()
-        Label(self.cover,textvariable=self.timeRem).pack(side=RIGHT,expand=NO,padx=5)
+        self.l2 = Label(self.cover,textvariable=self.timeRem)
+        self.pack_intern()
+        
         #'23 hours, 4 minutes, 15 seconds remaining'
 
         self.cover.pack(side=LEFT,expand=YES,fill=BOTH)
         self.show_s.pack(side=RIGHT,expand=NO,padx=4)
         self.canv.pack(side=RIGHT,expand=NO,padx=4)
-        
-        self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
-        Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
-                
-        self.check_check()
-        #self.sem.BEGIN()
+
 
 class MyDialog(Toplevel):
     '''
