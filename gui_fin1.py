@@ -235,14 +235,18 @@ class Bottom(Frame):
         Frame.__init__(self,master)
 
         res = PSO_search(nsp,self)
+        res()# I have to always create an instance of this. I can't always call it that way.
+        #But by implementing a __call__ I have given an opportunity to edit intrinsic parameters externally before opening the dialogs
+
         storing = res.result
+        pop,maxite,w,c1,c2 = storing['population size'],storing['maximum iteration'],storing['omega'],storing['phip'],storing['phig']
         name = res.name
         newWeight = res.newWeight
         fit_txt = res.Fit_txt()
         #del(res)
 
         f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
-        tuy = self.nsp.create_PSO_search(100,500,Fitness_fxn=f_fxn)
+        tuy = self.nsp.create_PSO_search(pop,maxite,w,c1,c2,Fitness_fxn=f_fxn)
         self.sem = Sear_Moni.Search_Monitor(tuy,name)        
         self.nsp.start_new_search(self.sem)
         
@@ -258,7 +262,7 @@ class Bottom(Frame):
         #self.sem.BEGIN()
     def pack_intern(self):
         self.prog.pack(side=TOP,expand=NO,fill=X)        
-        _wrap.pack(side=BOTTOM,expand=NO,fill=X)
+        self._wrap.pack(side=BOTTOM,expand=NO,fill=X)
         self.l2.pack(side=RIGHT,expand=NO,padx=5)
         self.l1.pack(side=LEFT,expand=NO,padx=5)
     
@@ -267,7 +271,7 @@ class Bottom(Frame):
         self.cover = Frame(self.Removable)
         self.prog = Progressbar(self.cover,mode='determinate',maximum=1000,value=100)
         
-        _wrap = Frame(self.cover)
+        self._wrap = Frame(self.cover)
         self.photos = {'pl':PhotoImage(file='icons/play.png'),'pa':PhotoImage(file='icons/pause.png'),'st':PhotoImage(file='icons/stop.png'),'pr':PhotoImage(file='icons/prev.png'),'ne':PhotoImage(file='icons/next.png')}
         self.taaa = ('pl','pa','st','pr','ne')
         descrp = {'pl':'To begin a Search or Play after a Pause','pa':'To pause an ongoing search','st':'To stop an ongoing search','pr':'This is to reduce the maximum iteration of the search by the number entered here','ne':'To extend the maximum iteration of the search by whatever number entered here'}
@@ -276,12 +280,12 @@ class Bottom(Frame):
         self.__extends.set('')
         self.buttons ={}
         for but in self.taaa:
-            t = Button(_wrap,image=self.photos[but],command=command[but])
+            t = Button(self._wrap,image=self.photos[but],command=command[but])
             t.pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
             gg.CreateToolTip(t,descrp[but],wrap_length=1000)
             self.buttons[but]=t
             if but=='pr':
-                Entry(_wrap,width=8,textvariable=self.__extends).pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
+                Entry(self._wrap,width=8,textvariable=self.__extends).pack(side=LEFT,expand=NO,ipadx=3,ipady=3)
         #Section 2
         self.canv = Canvas(self.Removable)
         self.canv.configure(width=284,height=100)
@@ -468,13 +472,17 @@ class PSO_search(MyDialog):
         for item,val in self.newWeight.items():
             kam += '%s %s, '%(item,val)
         return kam
+    
+    def __call__(self,title='Configure a PSO Search'):
+        MyDialog.__init__(self,self.parent,title=title)
+
 
     def __init__(self,nsp,parent):
 
         if isinstance(nsp,Prob.NSP):
             self.nsp = nsp
         self.newWeight = dict(C1=4,C2A=4,C2A1=0,C2B=0,C2B1=0,C3=1,C4=0,C4B=1,C5=1,C6=1)
-        lst = ('search name','population size','maximum iteration','omega','phip','phig','Fitness fxn')
+        #lst = ('search name','population size','maximum iteration','omega','phip','phig','Fitness fxn')
         self.default = {'search name':'Unknown','population size':500, 'maximum iteration':500, 'omega':0.5, 'phip':0.5, 'phig':0.5, 'Fitness_fxn':self.newWeight}
         self.description ={'search name':'The name you want your search to be called',
         'population size':'This is the number of particles you want to use to carry out the search', 
@@ -484,7 +492,8 @@ class PSO_search(MyDialog):
         'phig':"This controls the weight and influence of the search's global best position on its next position",
         'Fitness_fxn':"This controls the weight of soft constraints for evaluation the fitness of particles during the particle's run"}
 
-        MyDialog.__init__(self,parent,title='Configure a PSO Search')
+        self.parent = parent
+        
         
     def set_weight(self):
         descri = {'C1':self.nsp.C1.description,'C2A':self.nsp.C2A.description,

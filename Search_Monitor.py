@@ -376,7 +376,11 @@ class Search_Monitor(Search_Timer):
         self.__standby_message = '... SEARCH ONGOING ...'
 
     def on_ended_(self,*args,**kwargs):
-        self.add_info('%s search Ends'%self.name)
+        qscp = tost(self.get_curr_search_time_cp())
+        qsel = tost(self.get_curr_search_time_el())
+        qel = tost(self.get_curr_time_el())
+        self.add_info('%s search Ends after %s cpu search time %s elapsed search time and %s wall time '%(self.name,qscp,qsel,qel))
+        self.__cur_duration = 30
         self.__standby_message = '... SEARCH UNCONFIGURED ...'
     
     def on_error(self,ite=0,msg='',*args,**kwargs):
