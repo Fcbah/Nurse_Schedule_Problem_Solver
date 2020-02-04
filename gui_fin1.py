@@ -99,11 +99,15 @@ class Left(Frame):
         self.viol_select.pack(side=TOP, expand=NO,fill=X)
         self.fit_view.pack(side=BOTTOM, expand=NO, fill=X)
 
+DANGLING = 'dangling'
+DORMANT = 'dormant'
+OKAY = 'active'
+
 class Bottom(Frame):
     def disp_to_get_search(self):
         self.clear_screen()    
-    def alert_search(self):
-        self.event_generate(self.new_search_created)
+    #def alert_search(self):
+    #    self.event_generate(self.new_search_created)
     def clear_canv(self):
         self.canv.delete('all')       
         pass
@@ -145,8 +149,7 @@ class Bottom(Frame):
         self.canv.create_text(a11[0]+x_len/2, a11[1]+y_len/2,font = font,text='%s'%t2,fill='white',tags=('all','text'))
 
         self.canv.create_text(a20[0]+x_len/2, a20[1]+y_len/2,font = font,text='%s'%t3,fill='white',tags=('all','text'))
-        self.canv.create_text(a21[0]+x_len/2, a21[1]+y_len/2,font = font,text='%s'%t4,fill='white',tags=('all','text'))
-    
+        self.canv.create_text(a21[0]+x_len/2, a21[1]+y_len/2,font = font,text='%s'%t4,fill='white',tags=('all','text'))   
     def set_show_s(self):
         '''
         sets 
@@ -155,46 +158,52 @@ class Bottom(Frame):
         status_bar
         percent and timeRemaining
         '''
-        it=self.sem.get_ite()#ite
-        maxit=self.sem.get_maxiter()#maximum iteration
-        mean_x=self.sem.get_mean_fx()
-        mean_p =self.sem.get_mean_fp()
-        fg = self.sem._search_obj.fg
-        stat= self.sem.get_curr_message()
-        perc= self.sem.get_percent_complete()
-        timeRem = self.sem.get_time_remaining_el()
-
-        self.prog.configure(maximum=maxit,value=it)#progress_bar
-
-        self.it.set('%d'%it)        
-        self.maxit.set('%d'%maxit)
         
-        if mean_x:
-            self.mean_x.set('%.7f'%mean_x)
-        else:
-            self.mean_x.set('Not_Set')
-        if mean_p:
-            self.mean_p.set('%.7f'%mean_p)
-        else:
-            self.mean_p.set('Not_Set')
-        if fg:
-            self.fg_s.set('%.7f'%fg)
-        else:
-            self.fg_s.set('Not_Set')
+        if self.state != DANGLING:
 
-        self.status.set('%s'%stat) #'SEARCH UNCONFIGURED' ...SEARCH NOT YET STARTED...
+            it=self.sem.get_ite()#ite
+            maxit=self.sem.get_maxiter()#maximum iteration
+            mean_x=self.sem.get_mean_fx()
+            mean_p =self.sem.get_mean_fp()
+            fg = self.sem._search_obj.fg
 
-        self.percent.set('%d%%'%int(perc))
-        self.timeRem.set('%s Remaining'%Sear_Moni.tost(timeRem))
-
-        kker = {'pl':self.sem.playable,'pa':self.sem.can_pause,'st':self.sem.can_stop,'pr':self.sem.can_extend,'ne':self.sem.can_extend}
-        for but in self.taaa:
-            if kker[but]():
-                self.buttons[but]['state'] = NORMAL
-            else:
-                self.buttons[but]['state'] = DISABLED
+            self.it.set('%d'%it)        
+            self.maxit.set('%d'%maxit)
             
+            if mean_x:
+                self.mean_x.set('%.7f'%mean_x)
+            else:
+                self.mean_x.set('Not_Set')
+            if mean_p:
+                self.mean_p.set('%.7f'%mean_p)
+            else:
+                self.mean_p.set('Not_Set')
+            if fg:
+                self.fg_s.set('%.7f'%fg)
+            else:
+                self.fg_s.set('Not_Set')
 
+            perc= self.sem.get_percent_complete()
+            timeRem = self.sem.get_time_remaining_el()
+
+            if self.state != DORMANT:
+                self.prog.configure(maximum=maxit,value=it)#progress_bar            
+                self.percent.set('%d%%'%int(perc))
+                self.timeRem.set('%s Remaining'%Sear_Moni.tost(timeRem))
+
+                kker = {'pl':self.sem.playable,'pa':self.sem.can_pause,'st':self.sem.can_stop,'pr':self.sem.can_extend,'ne':self.sem.can_extend}
+                for but in self.taaa:
+                    if kker[but]():
+                        self.buttons[but]['state'] = NORMAL
+                    else:
+                        self.buttons[but]['state'] = DISABLED
+
+            stat= self.sem.get_curr_message()
+        else:
+            stat = 'SEARCH UNCONFIGURED'        
+        
+        self.status.set('%s'%stat) #'SEARCH UNCONFIGURED' ...SEARCH NOT YET STARTED...
+   
     def next_extend_maxite(self):
         '''
         Hook to the next button
@@ -230,7 +239,9 @@ class Bottom(Frame):
             self.nsp = nsp
         else: raise TypeError()
 
-        self.new_search_created = '<<new_search_created>>'
+        #self.new_search_created = '<<new_search_created>>'
+        
+        self.state = DANGLING
         
         Frame.__init__(self,master)
 
@@ -243,6 +254,9 @@ class Bottom(Frame):
         name = res.name
         newWeight = res.newWeight
         fit_txt = res.Fit_txt()
+
+        self.state = ACTIVE
+
         #del(res)
 
         f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
