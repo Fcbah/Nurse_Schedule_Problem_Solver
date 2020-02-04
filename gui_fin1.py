@@ -234,46 +234,49 @@ class Bottom(Frame):
             self.__extends.set('')
             return m
 
+    def get_pso_search(self):
+        
+        res = PSO_search(self.nsp,self)
+        res.result = None
+        res()# I have to always create an instance of this. I can't always call it that way.
+        #But by implementing a __call__ I have given an opportunity to edit intrinsic parameters externally before opening the dialogs
+        
+        if res.result:
+            storing = res.result
+            pop,maxite,w,c1,c2 = storing['population size'],storing['maximum iteration'],storing['omega'],storing['phip'],storing['phig']
+            name = res.name
+            newWeight = res.newWeight
+            fit_txt = res.Fit_txt()           
+
+            f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
+            tuy = self.nsp.create_PSO_search(pop,maxite,w,c1,c2,Fitness_fxn=f_fxn)
+            self.sem = Sear_Moni.Search_Monitor(tuy,name)        
+            self.nsp.start_new_search(self.sem)
+
+            self.state = ACTIVE
+            if (self.state != DANGLING) or (self.state != DORMANT):
+                self.start_pack()
+
     def __init__(self,master,nsp):
         if isinstance(nsp,Prob.NSP):
             self.nsp = nsp
         else: raise TypeError()
-
-        #self.new_search_created = '<<new_search_created>>'
         
         self.state = DANGLING
         
         Frame.__init__(self,master)
 
-        res = PSO_search(nsp,self)
-        res()# I have to always create an instance of this. I can't always call it that way.
-        #But by implementing a __call__ I have given an opportunity to edit intrinsic parameters externally before opening the dialogs
-
-        storing = res.result
-        pop,maxite,w,c1,c2 = storing['population size'],storing['maximum iteration'],storing['omega'],storing['phip'],storing['phig']
-        name = res.name
-        newWeight = res.newWeight
-        fit_txt = res.Fit_txt()
-
-        self.state = ACTIVE
-
-        #del(res)
-
-        f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
-        tuy = self.nsp.create_PSO_search(pop,maxite,w,c1,c2,Fitness_fxn=f_fxn)
-        self.sem = Sear_Moni.Search_Monitor(tuy,name)        
-        self.nsp.start_new_search(self.sem)
-        
+        #self.get_pso_search()
         self.Removable = Frame(self)
-        self.status = StringVar()
-        
-        self.start_pack()
-        
+
+        self.get_pso_search()
+
         self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
+        self.status = StringVar()
         Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
                 
         self.check_check()
-        #self.sem.BEGIN()
+
     def pack_intern(self):
         self.prog.pack(side=TOP,expand=NO,fill=X)        
         self._wrap.pack(side=BOTTOM,expand=NO,fill=X)
