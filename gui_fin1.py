@@ -202,6 +202,21 @@ class Bottom(Frame):
         
         self.status.set('%s'%stat) #'SEARCH UNCONFIGURED' ...SEARCH NOT YET STARTED...
    
+    def PLAY(self):
+        '''
+        To make play button work normally when search monitor widget changes.
+        '''
+        self.sem.PLAY()
+    def PAUSE(self):
+        '''
+        To make pause button work normally when search monitor widget changes.
+        '''
+        self.sem.PAUSE()
+    def STOP(self):
+        '''
+        To make stop button work normally when search monitor widget changes.
+        '''
+        self.sem.STOP()
     def next_extend_maxite(self):
         '''
         Hook to the next button
@@ -209,7 +224,6 @@ class Bottom(Frame):
         m =self.get_extent()
         if m:
             self.sem.EXTEND(m)
-
     def prev_reduce_maxite(self):
         '''
         Hook to be prev button
@@ -217,7 +231,6 @@ class Bottom(Frame):
         m = self.get_extent()
         if m:
             self.sem.EXTEND(-1*m)
-
     def get_extent(self):
         '''
         Retrieves the integer entered in the prev button
@@ -297,13 +310,13 @@ class Bottom(Frame):
         self.Removable = Frame(self)
         
         self.pack_first_requestor()
-        #self.create_pso_search()
 
         self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
         self.status = StringVar()
         Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
                 
         self.check_check()
+
 
     def pack_requestor(self):
         self.req =Button(self.cover,text='Create new PSO SEARCH',command=self.create_pso_search,font=('Times New Roman', 20),bg='green',fg='white')
@@ -337,7 +350,7 @@ class Bottom(Frame):
         self.photos = {'pl':PhotoImage(file='icons/play.png'),'pa':PhotoImage(file='icons/pause.png'),'st':PhotoImage(file='icons/stop.png'),'pr':PhotoImage(file='icons/prev.png'),'ne':PhotoImage(file='icons/next.png')}
         self.taaa = ('pl','pa','st','pr','ne')
         descrp = {'pl':'To begin a Search or Play after a Pause','pa':'To pause an ongoing search','st':'To stop an ongoing search','pr':'This is to reduce the maximum iteration of the search by the number entered here','ne':'To extend the maximum iteration of the search by whatever number entered here'}
-        command = {'pl':self.sem.PLAY,'pa':self.sem.PAUSE,'st':self.sem.STOP,'pr':self.prev_reduce_maxite,'ne':self.next_extend_maxite}
+        command = {'pl':self.PLAY,'pa':self.PAUSE,'st':self.STOP,'pr':self.prev_reduce_maxite,'ne':self.next_extend_maxite}
         self.__extends=StringVar()
         self.__extends.set('')
         self.buttons ={}

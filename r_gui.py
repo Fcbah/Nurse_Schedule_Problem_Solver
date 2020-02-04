@@ -872,7 +872,7 @@ class const_fxn_selector(Frame):
 
     def __init__(self,master=None,viol_fxn=[]):
         '''
-        ####canwrap: is needed for the binding to the Canvas wrapers current particle
+        ####canwrap: is needed for the binding to the Canvas wrappers current particle
         viol_fxn: a list of tuple giving the ('text',const_fxn object) option for the NSP problem 
         '''    
         Frame.__init__(self,master)
