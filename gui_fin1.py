@@ -104,10 +104,6 @@ DORMANT = 'dormant'
 OKAY = 'active'
 
 class Bottom(Frame):
-    #def disp_to_get_search(self):
-        #self.clear_screen()    
-    #def alert_search(self):
-    #    self.event_generate(self.new_search_created)
     def clear_canv(self):
         self.canv.delete('all')       
         pass
@@ -236,14 +232,13 @@ class Bottom(Frame):
             self.__extends.set('')
             return m
 
-    def get_pso_search(self):
+    def create_pso_search(self):
         
         res = PSO_search(self.nsp,self)
         res.result = None
         res()# I have to always create an instance of this. I can't always call it that way.
         #But by implementing a __call__ I have given an opportunity to edit intrinsic parameters externally before opening the dialogs
         
-        #print('RESULT IS THIS ',res.result) #USED TO TRACK AN ERROR {...self.canv not defined...}
         if res.result:
             storing = res.result
             pop,maxite,w,c1,c2 = storing['population size'],storing['maximum iteration'],storing['omega'],storing['phip'],storing['phig']
@@ -254,7 +249,14 @@ class Bottom(Frame):
             f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
             tuy = self.nsp.create_PSO_search(pop,maxite,w,c1,c2,Fitness_fxn=f_fxn)
             self.attach_new_search(Sear_Moni.Search_Monitor(tuy,name))
-            
+    
+    def pack_first_requestor(self):
+        self.fir_req =Button(self.Removable,text='Click to create PSO SEARCH',command=self.create_pso_search,font=('Times New Roman', 20),bg='green',fg='white')
+        self.fir_req.pack(side=LEFT,expand=YES,fill=BOTH,ipadx=25,ipady=25)
+    
+    def unpack_first_requestor(self):
+        self.fir_req.pack_forget()
+
     def attach_new_search(self,sea_Moni):
         '''
         This does all the underground work of attaching a new Search Monitor object to the nsp, sem,
@@ -264,17 +266,15 @@ class Bottom(Frame):
         self.nsp.start_new_search(sea_Moni)
         self.bind_sem()
         
-        #print ('ENTERED') #USED TO TRACK AN ERROR
         if (self.state == DORMANT) or (self.state == DANGLING):
             if self.state == DORMANT:
                 self.state = ACTIVE
-                #self.unpack_requestor
-                #self.pack_intern
+                self.unpack_requestor()
+                self.pack_intern()
                 pass
             elif self.state == DANGLING:
                 self.state = ACTIVE
-                #if (self.state != DANGLING) or (self.state != DORMANT):
-                #self.unpack_first_requester
+                self.unpack_first_requestor()
                 self.start_create_n_pack()
 
     def bind_sem(self):
@@ -282,8 +282,8 @@ class Bottom(Frame):
     
     def on_search_end(self,*args,**kwargs):
         self.state = DORMANT
-        #self.unpack_intern
-        #self.pack_requestor
+        self.unpack_intern()
+        self.pack_requestor()
 
     def __init__(self,master,nsp):
         if isinstance(nsp,Prob.NSP):
@@ -294,17 +294,29 @@ class Bottom(Frame):
         
         Frame.__init__(self,master)
 
-        #self.get_pso_search()
         self.Removable = Frame(self)
         
-        #self.pack_first_requestor
-        self.get_pso_search()
+        self.pack_first_requestor()
+        #self.create_pso_search()
 
         self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
         self.status = StringVar()
         Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
                 
         self.check_check()
+
+    def pack_requestor(self):
+        self.req =Button(self.cover,text='Create new PSO SEARCH',command=self.create_pso_search,font=('Times New Roman', 20),bg='green',fg='white')
+        self.req.pack(side=LEFT,expand=YES,fill=BOTH)
+
+    def unpack_requestor(self):
+        self.req.pack_forget()
+
+    def unpack_intern(self):
+        self.prog.pack_forget()        
+        self._wrap.pack_forget()
+        self.l2.pack_forget()
+        self.l1.pack_forget()
 
     def pack_intern(self):
         self.prog.pack(side=TOP,expand=NO,fill=X)        
@@ -378,7 +390,6 @@ class Bottom(Frame):
         self.cover.pack(side=LEFT,expand=YES,fill=BOTH)
         self.show_s.pack(side=RIGHT,expand=NO,padx=4)
         self.canv.pack(side=RIGHT,expand=NO,padx=4)
-
 
 class MyDialog(Toplevel):
     '''
