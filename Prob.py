@@ -89,7 +89,7 @@ class NSP(part_Holder):
 
     def can_search(self):
         if self.curr_search:
-            if self.curr_search.is_ended:
+            if self.curr_search.has_ended():
                 return True
         else:
             return True
