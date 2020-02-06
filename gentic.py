@@ -95,22 +95,33 @@ class gen_algo(Search):
         
             xn[i] =tmp
         self.x = xn
-    
+    def regenerate_itera(self):
+        '''
+        This is the regeneration that takes place during the iteration (i.e. not in the initialization phase)
+        This is because some genetic algorithms change the way regeneration is being done during the 
+        '''
+        self.regenerate()
+
     def calc_Fitness(self):
         '''
         calculates the fitness of all particles in the population
         ==priv||==
         '''
         fxm = self.fx.copy()
-        for i in range(self.S):
+        for i in range(len(fxm)):
             fxm[i] = self.get_obj_fxn()(self.x[i],*self.get_fit_args())
         self.fx = fxm
     
-    def pair_selection(self):
+    def pair_selection(self,arg_eligible = None):
         '''
+        + arg_eligible: this is the array containing index of eligible particles to reproduce. But if "None" then all particles are eligible
         ==priv|==
         '''
-        a = np.arange(self.S)
+        if isinstance(arg_eligible,(np.ndarray,list)):
+            a = arg_eligible #arg_where
+        else:
+            a = np.arange(self.S)
+
         pp = 1 -self.fx
         pp = pp/pp.sum()
         choice = np.random.choice(a, (self.S,2), p=pp)
@@ -136,14 +147,20 @@ class gen_algo(Search):
             choice = np.random.choice([True,False],(self.S,self.D()),p=[self.mut_prob, 1-self.mut_prob])
             self.x[choice] = np.random.randint(self.lb,self.ub,choice.sum())
 
-    def update_best(self,ite):
+    def update_best(self,ite,arg_eligible=None):
         '''
+        + arg_eligible: 
         Checks if a new best has been found and updates parameters accordingly
         Trigges the base new_best function for the on_new_best event
         ==priv|==
         '''
-        i_min = np.argmin(self.fx)
-        if(self.fx[i_min]<=self.fg):
+        if isinstance(arg_eligible,(np.ndarray,list)):
+            fx = self.fx[arg_eligible]
+        else:
+            fx = self.fx 
+
+        i_min = np.argmin(fx)
+        if(self.fx[i_min] < self.fg):
             g= self.x[i_min,:].copy()
             fg = self.fx[i_min]
             self.new_best(ite,g,fg)
@@ -167,7 +184,7 @@ class gen_algo(Search):
             choice = self.pair_selection()
             self.cross_over(pattern,choice)
             self.random_mutation()
-            self.regenerate()
+            self.regenerate_itera()
             self.calc_Fitness()
             self.update_best(itera)
             maxiter += self.ite_changed(itera,maxiter,self.fx,x=self.x,g=self.g,fg=self.fg)
