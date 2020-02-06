@@ -182,13 +182,13 @@ class gen_algo(Search):
         return self.nsp.get_Hard_Viol_fxns()
 
 
-    def __init__(self,lb,ub,pop_size,mutation_probability,nsp,Fitness,maxite,pre_begin = False,show_means = False):
+    def __init__(self,lb,ub,pop_size,mutation_probability,nsp,Fitness,maxite,pre_begin = False):
         '''
         Creates a genetic algorithm based search object
         ==inh|==
         ==param(b,ub,S,mut_prob)==priv(x,fx,g,fg)==
         '''
-        Search.__init__(self,maxite,Fitness,nsp,show_mean=show_means)
+        Search.__init__(self,maxite,Fitness,nsp)
         self.lb = lb
         self.ub = ub
         self.S = pop_size
