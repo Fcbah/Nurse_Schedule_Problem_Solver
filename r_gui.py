@@ -883,7 +883,7 @@ class const_fxn_selector(Frame):
         self.__wrap = Frame(self)        
         self.list_w=Listbox(self.__wrap)
         self.scrolly= Scrollbar(self.__wrap,command=self.list_w.yview)
-        self.list_w.configure(yscrollcommand=self.scrolly.set)
+        self.list_w.configure(yscrollcommand=self.scrolly.set,height = 5)
         self.list_w.pack(side=LEFT,expand=NO,fill=Y)
         self.scrolly.pack(side=RIGHT,expand=NO,fill=Y)
         
@@ -900,7 +900,7 @@ class const_fxn_selector(Frame):
         
         we_scroll.configure(command=self.describe.yview)
         we_scroll.pack(side=RIGHT,expand=NO,fill=Y)
-        we.pack(side=TOP,expand=NO,fill=X)
+        
                 
         self.selection_changed = '<<selection_changed>>'
         self.show_viol_changed = '<<show_violation_changed>>'
@@ -925,8 +925,10 @@ class const_fxn_selector(Frame):
 
         
         self.showViolation.set(self.show_viol)
-        self.describe.configure(width=self.__wrap.winfo_width(),height=12)
+        self.describe.configure(width=self.__wrap.winfo_width(),height=5)
         self.describe.pack(side=LEFT,expand=YES,fill=X)
+        we.configure(height=6)
+        we.pack(side=TOP,expand=NO,fill=X)
 
         self.list_w.after(500,self.check_sel_change)
 
@@ -1018,10 +1020,11 @@ class fit_viewer(Frame):
         x_len = 70
         y_len = 30
         font = ('Times New Roman',12,'bold')
-        a00 = 1,1,1+x_len,1 + y_len
-        a10=1,1+y_len,1 +x_len,1+ 2*y_len
-        a01 = 1+x_len,1,1+2*x_len,1+ y_len
-        a11 = 1+x_len,1+y_len,1+2*x_len,1+2*y_len
+        a=2
+        a00 = a,a,a+x_len,a + y_len
+        a10=a,a+y_len,a +x_len,a+ 2*y_len
+        a01 = a+x_len,a,a+2*x_len,a+ y_len
+        a11 = a+x_len,a+y_len,a+2*x_len,a+2*y_len
         self.canv.create_rectangle(*a00,tags=('all','rect'))
         self.canv.create_rectangle(*a10,fill='green',tags=('all','rect'))
         self.canv.create_rectangle(*a01,tags=('all','rect'))
@@ -1057,11 +1060,11 @@ class fit_viewer(Frame):
 
         self.boil = IntVar()
         self.boil.set(0)
-        Checkbutton(self,text='Link with Viol select',variable=self.boil).pack(side=TOP,expand=NO,fill=X)
+        Checkbutton(self,text='Link with Violation selector',variable=self.boil).pack(side=TOP,expand=NO,fill=X)
 
         self.canv = Canvas(self)        
         self.__wrap.pack(side=TOP,expand=NO,fill=X)        
-        self.canv.configure(width=self.__wrap.winfo_width(),height=70)
+        self.canv.configure(width=self.__wrap.winfo_width()+10,height=70)
         self.canv.pack(side=TOP,expand=YES,fill=X)
         
         self.nsp=ks

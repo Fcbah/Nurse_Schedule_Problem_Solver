@@ -7,6 +7,7 @@ import Fit as f
 import r_gui as re
 import gui_small_class as gg
 import Search_Monitor as Sear_Moni
+import gentic as gene
 
 class window(Frame):
     def __init__(self,master=None):
@@ -245,6 +246,37 @@ class Bottom(Frame):
             self.__extends.set('')
             return m
 
+
+    def create_search(self):
+        gin =  {'Reg-Genetic':'Genetic algorithm with Regeneration','PSO':'Particle Swarm Optimization'}
+        rin = {'Reg-Genetic':self.create_genetic_regenerate,'PSO':self.create_pso_search}
+        tr = NSP_search_select(self,gin)
+        k = tr.result
+
+        if k:
+            rin[k]()
+
+    def create_genetic_regenerate(self):
+        res = PSO_search(self.nsp,self)
+        res.default = {'search name':'Un-named R-GA','population size':10, 'maximum iteration':500, 'mutation rate':0.01, 'Fitness_fxn':res.newWeight}
+        res.description ={'search name':'The name you want your search to be called',
+        'population size':'This is the number of particles you want to use to carry out the search', 
+        'maximum iteration':'This is the number of times you want the search routine to be carried out',
+        'mutation rate':'This is the NORMALIZED PROBABILITY of mutation (how frequent you want mutation of genes of particles) occurring when creating the child',
+        'Fitness_fxn':"This controls the weight of soft constraints for evaluation the fitness of particles during the particle's run"}
+        res('Configure a regenerating-Genetic algorithm search')
+
+        if res.result:
+            storing = res.result
+            pop,maxite,mut_rate = storing['population size'],storing['maximum iteration'],storing['mutation rate']
+            name = res.name
+            newWeight = res.newWeight
+            fit_txt = res.Fit_txt()           
+
+            f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn for a regenerating genetic algorithm (%s), whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%(name,fit_txt),const_fxns=self.nsp.soft_con_dict,weights=newWeight)
+            tuy = self.nsp.create_genetic_search(pop,mut_rate,maxite,f_fxn)
+            self.attach_new_search(Sear_Moni.Search_Monitor(tuy,name))
+
     def create_pso_search(self):
         
         res = PSO_search(self.nsp,self)
@@ -259,12 +291,12 @@ class Bottom(Frame):
             newWeight = res.newWeight
             fit_txt = res.Fit_txt()           
 
-            f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%fit_txt,const_fxns=self.nsp.soft_con_dict,weights=newWeight)
+            f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn for a Particle Swarm Optimization (%s) whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%(name,fit_txt),const_fxns=self.nsp.soft_con_dict,weights=newWeight)
             tuy = self.nsp.create_PSO_search(pop,maxite,w,c1,c2,Fitness_fxn=f_fxn)
             self.attach_new_search(Sear_Moni.Search_Monitor(tuy,name))
     
     def pack_first_requestor(self):
-        self.fir_req =Button(self.Removable,text='Click to create PSO SEARCH',command=self.create_pso_search,font=('Times New Roman', 20),bg='green',fg='white')
+        self.fir_req =Button(self.Removable,text='CLICK TO CREATE A NEW SEARCH',command=self.create_search,font=('Times New Roman', 20),bg='green',fg='white')
         self.fir_req.pack(side=LEFT,expand=YES,fill=BOTH,ipadx=25,ipady=25)
     
     def unpack_first_requestor(self):
@@ -319,7 +351,7 @@ class Bottom(Frame):
 
 
     def pack_requestor(self):
-        self.req =Button(self.cover,text='Create new PSO SEARCH',command=self.create_pso_search,font=('Times New Roman', 20),bg='green',fg='white')
+        self.req =Button(self.cover,text='CREATE A NEW SEARCH',command=self.create_search,font=('Times New Roman', 20),bg='green',fg='white')
         self.req.pack(side=LEFT,expand=YES,fill=BOTH)
 
     def unpack_requestor(self):
@@ -416,7 +448,7 @@ class MyDialog(Toplevel):
         self.transient(parent)
 
         if title:
-            self.title = title
+            self.wm_title(title)
         
         self.par = parent
 
@@ -557,7 +589,7 @@ class PSO_search(MyDialog):
             self.nsp = nsp
         self.newWeight = dict(C1=4,C2A=4,C2A1=0,C2B=0,C2B1=0,C3=1,C4=0,C4B=1,C5=1,C6=1)
         #lst = ('search name','population size','maximum iteration','omega','phip','phig','Fitness fxn')
-        self.default = {'search name':'Unknown','population size':500, 'maximum iteration':500, 'omega':0.5, 'phip':0.5, 'phig':0.5, 'Fitness_fxn':self.newWeight}
+        self.default = {'search name':'Un-named PSO','population size':100, 'maximum iteration':500, 'omega':0.5, 'phip':0.5, 'phig':0.5, 'Fitness_fxn':self.newWeight}
         self.description ={'search name':'The name you want your search to be called',
         'population size':'This is the number of particles you want to use to carry out the search', 
         'maximum iteration':'This is the number of times you want the search routine to be carried out',
@@ -634,6 +666,51 @@ class PSO_search(MyDialog):
         #tuy = self.nsp.create_PSO_search(100,500,Fitness_fxn=f_fxn)
         #self.sem = Sear_Moni.Search_Monitor(tuy,'under build')
         #self.nsp.start_new_search(self.sem)
+
+class NSP_search_select(MyDialog):
+    def __init__(self,parent,sch_ls = {'Genetic':'Genetic algorithm with Regeneration','PSO':'Particle Swarm Optimization',}):
+        
+        self.sch_ls = list(sch_ls.items())
+        MyDialog.__init__(self,parent,title='Select the Search Type')
+        
+    
+    def body(self,master):        
+        self.lst  = Listbox(master)
+        self.fill_list()
+        self.prevsel = (0,)
+        self.prevsel1 = 0
+        self.lst.selection_set(0)
+
+        tr = Button(master,text='show Description')
+        self.tooltip = gg.CreateToolTip(tr,list(self.sch_ls[0])[1],True)
+
+        self.lst.configure(height=len(self.sch_ls) + 2)
+        tr.pack(side=TOP,expand=NO,padx=3,pady=3)
+        self.lst.pack(side=TOP,expand=NO,padx=3,pady=3)
+        self.check_sel()
+
+    def fill_list(self):
+        self.lst.delete(0,END)
+        for i,(key,val) in enumerate(self.sch_ls):
+            self.lst.insert(i,key)
+    
+    def on_sel_change(self):
+        m = self.prevsel1
+        self.tooltip.set_text(list(self.sch_ls[m])[1])
+
+    def check_sel(self):
+        k = self.lst.curselection()
+        if k != self.prevsel:
+            if k:                
+                self.prevsel1 = k[0]
+                self.on_sel_change()
+            self.prevsel = k
+
+        self.after(300,self.check_sel)
+    
+    def apply(self):
+        self.result  = list(self.sch_ls[self.prevsel1])[0]
+
 
 a = Tk()
 a.wm_title('Nursing Schedule Problem')
