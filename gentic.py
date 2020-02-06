@@ -4,6 +4,49 @@ from threading import Thread
 #import Constraints as con
 from Search import Search
 
+def Hard_Viol(x, m, *args):
+    '''
+    =Class=
+    + m: Hard viol function
+    Extracts the part of the violation fxn that is needed by the regenerate function and ravels to the right form
+    ==priv||==
+    '''
+    S = m(x, *args)
+    S = S==0
+    S = S.ravel()
+    return S
+    
+def create_pattern(nurses_no,no_of_days):
+    '''
+    =Class=
+    Creates the crossover pattern needed for gene selection and ravels to the right form
+    ==priv||==
+    '''
+    f = lambda m: m%2
+    A = np.fromfunction(f,(no_of_days,), dtype=int)
+    A = np.array(A,dtype=bool)        
+    B = np.vstack([A for x in range(nurses_no)])
+    return B.ravel()
+
+def regenerat(x,fit_args,lst_Hard,lb=0,ub=4):
+    '''
+    ==Class== ==ext==
+    To enable other objects to regenerate their random particles
+    x:np.ndarray
+        The particle to regenerate 
+    fit_args:list
+        A list of arguments for fitness function = nsp.get_fit_args()
+    lst_Hard: list of func
+        A list of Hard violation functions func(x,*fit_args) = nsp.get_hard_viol_fxns
+    '''
+    tmp=x.copy()
+    for m in lst_Hard:
+        ser = Hard_Viol(tmp,m,*fit_args)
+        while ser.sum():
+            tmp[ser] = np.random.randint(lb,ub,ser.sum())
+            ser = Hard_Viol(tmp,m,*fit_args)
+    return tmp
+
 class gen_algo(Search):
     '''
     This is a Genetic Algorithm Object
@@ -22,30 +65,6 @@ class gen_algo(Search):
     + Fitness: The fitness fxn that will give out the objective function
     + maxite: The maximum iteration for which the search should run
     '''   
-    
-    def Hard_Viol(x, m, *args):
-        '''
-        =Class=
-        Extracts the part of the violation fxn that is needed by the regenerate function and ravels to the right form
-        ==priv||==
-        '''
-        S = m(x, *args)
-        S = S==0
-        S = S.ravel()
-        return S
-
-    def create_pattern(nurses_no,no_of_days):
-        '''
-        =Class=
-        Creates the crossover pattern needed for gene selection and ravels to the right form
-        ==priv||==
-        '''
-        f = lambda m: m%2
-        A = np.fromfunction(f,(no_of_days,), dtype=int)
-        A = np.array(A,dtype=bool)        
-        B = np.vstack([A for x in range(nurses_no)])
-        return B.ravel()
-    
     def start(self):
         '''
         ==Override==
@@ -55,26 +74,7 @@ class gen_algo(Search):
         Search.start(self)
         self.search()
         self.after_ended()
-
-    def regenerat(x,fit_args,lst_Hard,lb=0,ub=4):
-        '''
-        ==Class== ==ext==
-        To enable other objects to regenerate their random particles
-        x:np.ndarray
-            The particle to regenerate 
-        fit_args:list
-            A list of arguments for fitness function = nsp.get_fit_args()
-        lst_Hard: list of func
-            A list of Hard violation functions func(x,*fit_args) = nsp.get_hard_viol_fxns
-        '''
-        tmp=x.copy()
-        for m in lst_Hard:
-            ser = gen_algo.Hard_Viol(tmp,m,*fit_args)
-            while ser.sum():
-                tmp[ser] = np.random.randint(lb,ub,ser.sum())
-                ser = gen_algo.Hard_Viol(tmp,m,*fit_args)
-        return tmp
-
+        
     def regenerate(self): 
         '''
         Transforms violating entries in x randomly within the [lb, ub) range
@@ -87,11 +87,11 @@ class gen_algo(Search):
             while(undone): #This ensures that if fulfiling a violation triggers another violation, there will still be a correction chance
                 undone = False
                 for m in self.lst_Hard():
-                    ser = gen_algo.Hard_Viol(tmp,m,*self.get_fit_args())
+                    ser = Hard_Viol(tmp,m,*self.get_fit_args())
                     while ser.sum():
                         undone = True
                         tmp[ser] = np.random.randint(self.lb,self.ub,ser.sum())
-                        ser = gen_algo.Hard_Viol(tmp,m,*self.get_fit_args())
+                        ser = Hard_Viol(tmp,m,*self.get_fit_args())
         
             xn[i] =tmp
         self.x = xn
@@ -160,7 +160,7 @@ class gen_algo(Search):
         self.regenerate()
         self.calc_Fitness()
         self.update_best(0)
-        pattern = gen_algo.create_pattern(self.get_nurses_no(),self.get_no_of_days())
+        pattern = create_pattern(self.get_nurses_no(),self.get_no_of_days())
         self.new_msg(0,'initialized','Succesfully initialized')
         itera = 1
         while itera <= maxiter:
@@ -180,7 +180,6 @@ class gen_algo(Search):
         This returns the violation functions for 
         '''
         return self.nsp.get_Hard_Viol_fxns()
-        pass
 
 
     def __init__(self,lb,ub,pop_size,mutation_probability,nsp,Fitness,maxite,pre_begin = False,show_means = False):
