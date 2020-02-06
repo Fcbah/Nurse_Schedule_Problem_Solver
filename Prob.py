@@ -3,7 +3,7 @@ import Fit
 import PSO
 import Constraints as c
 from Search import Search, part_Holder,ab_Search
-from gentic import gen_algo
+from gentic import regen_gen_algo
 
 
 def event_trigger(func_list,*args,**kwargs):
@@ -117,9 +117,9 @@ class NSP(part_Holder):
         Creates and returns a new genetic algorithm object
         '''
         if Fitness_fxn=='default':
-            tmp = gen_algo(0,4,pop_size,mutation_prob,self,self.fitt,maxite)
+            tmp = regen_gen_algo(0,4,pop_size,mutation_prob,self,self.fitt,maxite)
         elif isinstance(Fitness_fxn,Fit.Fitness_Fxn):
-            tmp = gen_algo(0,4,pop_size,mutation_prob,self,Fitness_fxn,maxite)
+            tmp = regen_gen_algo(0,4,pop_size,mutation_prob,self,Fitness_fxn,maxite)
         else:
             raise TypeError('Fitness fxn must be of type: %s'%type(Fitness_fxn))
         #tmp.on_ite_changed.append(self.on_i_c)

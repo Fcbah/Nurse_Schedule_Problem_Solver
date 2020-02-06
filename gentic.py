@@ -47,7 +47,7 @@ def regenerat(x,fit_args,lst_Hard,lb=0,ub=4):
             ser = Hard_Viol(tmp,m,*fit_args)
     return tmp
 
-class gen_algo(Search):
+class regen_gen_algo(Search):
     '''
     This is a Genetic Algorithm Object
     It is discrete, for solving the NSP
