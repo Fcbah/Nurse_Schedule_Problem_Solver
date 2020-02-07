@@ -121,8 +121,10 @@ class regen_gen_algo(Search):
         '''
         if isinstance(arg_eligible,(np.ndarray,list)):
             a = arg_eligible #arg_where
+            pp = 1 -self.fx[a]
         else:
             a = np.arange(self.S)
+            pp = 1 -self.fx
 
         pp = 1 -self.fx
         pp = pp/pp.sum()
@@ -156,12 +158,17 @@ class regen_gen_algo(Search):
         Trigges the base new_best function for the on_new_best event
         ==priv|==
         '''
-        if isinstance(arg_eligible,(np.ndarray,list)):
-            fx = self.fx[arg_eligible]
+        if isinstance(arg_eligible,(np.ndarray,list)):            
+            if len(arg_eligible):
+                fx = self.fx[arg_eligible]
+                i_min = np.argmin(fx)
+            else:
+                return None
         else:
-            fx = self.fx 
+            fx = self.fx
+            i_min = np.argmin(fx)
 
-        i_min = np.argmin(fx)
+        
         if(self.fx[i_min] < self.fg):
             g= self.x[i_min,:].copy()
             fg = self.fx[i_min]
@@ -223,8 +230,8 @@ class regen_gen_algo(Search):
 def lst_H_cons_wrapper(func_lst,args,x):
     return np.array([func(x,*args) for func in func_lst])
 
-def is_feasible_wrapper(x):
-    return np.all(x>=0)
+def is_feasible_wrapper(func,x):
+    return np.all(func(x)>=0)
 
 class allowance_gen_algo(regen_gen_algo):
     '''
@@ -257,6 +264,9 @@ class allowance_gen_algo(regen_gen_algo):
         else: raise ValueError('Invalid value for allow_prob')
         
         self.regen_init = regen_init
+        self.man = int(self.toler * self.S)
+        if self.man < 2:
+            self.man = 2
         #self.calc_Fitness()
 
     def calc_Fitness(self):
@@ -277,12 +287,12 @@ class allowance_gen_algo(regen_gen_algo):
         '''
         Selects only the breed viable for reproduction
         '''
-        man = self.toler * self.S
+        man = self.man
 
         kal = np.argsort(self.fx)
         kal = kal[-man:]#the list of those whose violation may be tolerated
 
-        twal = np.argwhere(self.fs) #the legitimate
+        twal = (np.nonzero(self.fs))[0] #the legitimate
         eli = np.unique(np.concatenate((kal,twal)))
         
         return regen_gen_algo.pair_selection(self,arg_eligible=eli)
@@ -310,5 +320,5 @@ class allowance_gen_algo(regen_gen_algo):
         Trigges the base new_best function for the on_new_best event
         ==priv|==
         '''
-        eli = np.argwhere(self.fs)
+        eli = np.nonzero(self.fs)[0]            
         regen_gen_algo.update_best(self,ite,arg_eligible=eli)

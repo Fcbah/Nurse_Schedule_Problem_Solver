@@ -133,7 +133,7 @@ class NSP(part_Holder):
         if Fitness_fxn=='default':
             tmp = allowance_gen_algo(0,4,pop_size,mutation_prob,self,self.fitt,maxite,allow_prob=allow_prob)
         elif isinstance(Fitness_fxn,Fit.Fitness_Fxn):
-            tmp = regen_gen_algo(0,4,pop_size,mutation_prob,self,Fitness_fxn,maxite,allow_prob=allow_prob)
+            tmp = allowance_gen_algo(0,4,pop_size,mutation_prob,self,Fitness_fxn,maxite,allow_prob=allow_prob)
         else:
             raise TypeError('Fitness fxn must be of type: %s'%type(Fitness_fxn))
         #tmp.on_ite_changed.append(self.on_i_c)
