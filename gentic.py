@@ -126,7 +126,7 @@ class regen_gen_algo(Search):
             a = np.arange(self.S)
             pp = 1 -self.fx
 
-        pp = 1 -self.fx
+        #pp = 1 -self.fx
         pp = pp/pp.sum()
         choice = np.random.choice(a, (self.S,2), p=pp)
         return choice
