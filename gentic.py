@@ -118,6 +118,11 @@ class regen_gen_algo(Search):
         '''
         + arg_eligible: this is the array containing index of eligible particles to reproduce. But if "None" then all particles are eligible
         ==priv|==
+
+        ERROR:
+        Ensure that the sum of self.fx or fx[arg_eligible] is not zero and that arg_eligible is not empty
+        that error is not handled
+        ensure that fx can not be a NaN it should be a normalized probability value
         '''
         if isinstance(arg_eligible,(np.ndarray,list)):
             a = arg_eligible #arg_where
@@ -299,7 +304,7 @@ class allowance_gen_algo(regen_gen_algo):
         errf = (np.nonzero(np.isfinite(self.fx)))[0]
 
         real_eli = np.intersect1d(eli,errf)
-        if len(real_eli) > man:
+        if len(real_eli) >= man:
             return regen_gen_algo.pair_selection(self,arg_eligible=real_eli)
         else:
             return regen_gen_algo.pair_selection(self)

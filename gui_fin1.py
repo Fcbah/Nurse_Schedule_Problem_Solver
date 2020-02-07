@@ -366,12 +366,18 @@ class Bottom(Frame):
         
         self.pack_first_requestor()
 
-        self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
+        #self.Removable.pack(side=TOP,expand=YES,fill=BOTH)
         self.status = StringVar()
         Label(self,bg='#002299',fg='white',textvariable=self.status,justify=LEFT).pack(side=BOTTOM,expand=YES,fill=X,ipady=2)
-                
+        self.Removable.pack(side=LEFT,expand=YES,fill=BOTH)
+        Button(self,text='Halstead Metrics',command=self.metrics).pack(side=RIGHT,expand=NO)
         self.check_check()
-
+    
+    def metrics(self):
+        import tkinter.filedialog as fd
+        import radon.metrics as met
+        
+        fd.Open()
 
     def pack_requestor(self):
         self.req =Button(self.cover,text='CREATE A NEW SEARCH',command=self.create_search,font=('Times New Roman', 20),bg='green',fg='white')
