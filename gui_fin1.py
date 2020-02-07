@@ -248,8 +248,8 @@ class Bottom(Frame):
 
 
     def create_search(self):
-        gin =  {'Reg-Genetic':'Genetic algorithm with Regeneration','PSO':'Particle Swarm Optimization'}
-        rin = {'Reg-Genetic':self.create_genetic_regenerate,'PSO':self.create_pso_search}
+        gin =  {'Reg-Genetic':'Genetic algorithm with Regeneration','Genetic':'Allowance - quota based Genetic algorithm search','PSO':'Particle Swarm Optimization'}
+        rin = {'Reg-Genetic':self.create_genetic_regenerate,'Genetic':self.create_genetic_search,'PSO':self.create_pso_search}
         tr = NSP_search_select(self,gin)
         k = tr.result
 
@@ -274,7 +274,29 @@ class Bottom(Frame):
             fit_txt = res.Fit_txt()           
 
             f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn for a regenerating genetic algorithm (%s), whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%(name,fit_txt),const_fxns=self.nsp.soft_con_dict,weights=newWeight)
-            tuy = self.nsp.create_genetic_search(pop,mut_rate,maxite,f_fxn)
+            tuy = self.nsp.create_regenerate_genetic_search(pop,mut_rate,maxite,f_fxn)
+            self.attach_new_search(Sear_Moni.Search_Monitor(tuy,name))
+
+    def create_genetic_search(self):
+        res = PSO_search(self.nsp,self)
+        res.default = {'search name':'Un-named AQ-GA','population size':10, 'maximum iteration':500, 'mutation rate':0.01,'allowance quota':0.1, 'Fitness_fxn':res.newWeight}
+        res.description ={'search name':'The name you want your search to be called',
+        'population size':'This is the number of particles you want to use to carry out the search', 
+        'maximum iteration':'This is the number of times you want the search routine to be carried out',
+        'mutation rate':'This is the NORMALIZED PROBABILITY of mutation (how frequent you want mutation of genes of particles) occurring when creating the child',
+        'allowance quota':'This is how much quota you want to reserve for exceptionally good particles violating hard constraints for a chance to atleast reproduce. \n 10 percent (0.1) is a nice value',
+        'Fitness_fxn':"This controls the weight of soft constraints for evaluation the fitness of particles during the particle's run"}
+        res('Configure a Genetic algorithm, allowance quota based search')
+
+        if res.result:
+            storing = res.result
+            pop,maxite,mut_rate,all_prob = storing['population size'],storing['maximum iteration'],storing['mutation rate'],storing['allowance quota']
+            name = res.name
+            newWeight = res.newWeight
+            fit_txt = res.Fit_txt()           
+
+            f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn for an allowance quota based genetic algorithm (%s), whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%(name,fit_txt),const_fxns=self.nsp.soft_con_dict,weights=newWeight)
+            tuy = self.nsp.create_genetic_search(pop,mut_rate,maxite,f_fxn,allow_prob=all_prob)
             self.attach_new_search(Sear_Moni.Search_Monitor(tuy,name))
 
     def create_pso_search(self):
