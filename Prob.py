@@ -3,7 +3,7 @@ import Fit
 import PSO
 import Constraints as c
 from Search import Search, part_Holder,ab_Search
-from gentic import regen_gen_algo
+from gentic import allowance_gen_algo, regen_gen_algo
 
 
 def event_trigger(func_list,*args,**kwargs):
@@ -112,14 +112,28 @@ class NSP(part_Holder):
                 pass
         else:
             pass
-    def create_genetic_search(self,pop_size,mutation_prob,maxite,Fitness_fxn='default'):
+    def create_regenerate_genetic_search(self,pop_size,mutation_prob,maxite,Fitness_fxn='default'):
         '''
-        Creates and returns a new genetic algorithm object
+        Creates and returns a new regeneration based genetic algorithm object
         '''
         if Fitness_fxn=='default':
             tmp = regen_gen_algo(0,4,pop_size,mutation_prob,self,self.fitt,maxite)
         elif isinstance(Fitness_fxn,Fit.Fitness_Fxn):
             tmp = regen_gen_algo(0,4,pop_size,mutation_prob,self,Fitness_fxn,maxite)
+        else:
+            raise TypeError('Fitness fxn must be of type: %s'%type(Fitness_fxn))
+        #tmp.on_ite_changed.append(self.on_i_c)
+        #tmp.on_new_best.append(self.on_n_b)
+        return tmp
+    
+    def create_genetic_search(self,pop_size,mutation_prob,maxite,Fitness_fxn='default',allow_prob=0.1):
+        '''
+        Creates and return a new genetic (allowance based) algorithm object
+        '''
+        if Fitness_fxn=='default':
+            tmp = allowance_gen_algo(0,4,pop_size,mutation_prob,self,self.fitt,maxite,allow_prob=allow_prob)
+        elif isinstance(Fitness_fxn,Fit.Fitness_Fxn):
+            tmp = regen_gen_algo(0,4,pop_size,mutation_prob,self,Fitness_fxn,maxite,allow_prob=allow_prob)
         else:
             raise TypeError('Fitness fxn must be of type: %s'%type(Fitness_fxn))
         #tmp.on_ite_changed.append(self.on_i_c)

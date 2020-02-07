@@ -1,5 +1,6 @@
 import numpy as np
 from threading import Thread
+from functools import partial
 
 #import Constraints as con
 from Search import Search
@@ -50,6 +51,7 @@ def regenerat(x,fit_args,lst_Hard,lb=0,ub=4):
 class regen_gen_algo(Search):
     '''
     This is a Genetic Algorithm Object
+    This solely relies on recurrent regenerating of particles randomly to wipe out all forms of hard constraints violations
     It is discrete, for solving the NSP
 
     ***You wouldn't need to tamper at all with any of the fields directly
@@ -191,7 +193,6 @@ class regen_gen_algo(Search):
             itera += 1
         self.new_msg(itera-1,'ended','Successfully ended at %s'%(itera-1))
 
-    
     def lst_Hard(self):
         '''
         This returns the violation functions for 
@@ -218,3 +219,96 @@ class regen_gen_algo(Search):
 
         if pre_begin:
             self.BEGIN()
+
+def lst_H_cons_wrapper(func_lst,args,x):
+    return np.array([func(x,*args) for func in func_lst])
+
+def is_feasible_wrapper(x):
+    return np.all(x>=0)
+
+class allowance_gen_algo(regen_gen_algo):
+    '''
+    This is a Genetic Algorithm Object
+    It relies on regeneration only for initialization, then makes a maximum allowance population quota for particles violating hard constraints
+    It is discrete, for solving the NSP
+    Parameters
+    ==========
+    + lb:   Lower bound (inclusive)
+    + ub:   Upper bound (exclusive)
+    + pop_size:   Number of particles needed to characterize the system
+    + mutation_probability: The normalized probability for mutation to occur
+    + nsp: The nursing schedule problem to be solved
+    + Fitness: The fitness fxn that will give out the objective function
+    + maxite: The maximum iteration for which the search should run
+    + allow_prob: allowance_probability ==>The normalized maximum probability for hard constraint violation tolerance
+    + regen_init: This sets if you want the search to regenerate on initialization or to allow hard constraint violations to persist
+    '''
+    def __init__(self,lb,ub,pop_size,mutation_probability,nsp,Fitness,maxite,allow_prob=0.1,regen_init = True,pre_begin=False):
+        
+        regen_gen_algo.__init__(self,lb,ub,pop_size,mutation_probability,nsp,Fitness,maxite,pre_begin=pre_begin)
+
+        hard_Lst =[a.obj_fxn for a  in self.nsp.hard_con_dict.values()]
+        hcons = partial(lst_H_cons_wrapper,hard_Lst,self.nsp.get_fitness_args())
+        self.is_feasible = partial(is_feasible_wrapper,hcons)
+
+        self.fs = np.zeros(self.S,dtype=bool)
+        if 0 <= allow_prob <= 1:
+            self.toler = allow_prob
+        else: raise ValueError('Invalid value for allow_prob')
+        
+        self.regen_init = regen_init
+        #self.calc_Fitness()
+
+    def calc_Fitness(self):
+        '''
+        calculates the fitness of all particles in the population 
+        Both 
+        ==priv||==
+        '''
+        fxm = self.fx.copy()
+        fs = self.fs.copy()
+        for i in range(len(fxm)):
+            fxm[i] = self.get_obj_fxn()(self.x[i],*self.get_fit_args())
+            fs[i] = self.is_feasible(self.x[i])
+        self.fx = fxm
+        self.fs = fs
+
+    def pair_selection(self):
+        '''
+        Selects only the breed viable for reproduction
+        '''
+        man = self.toler * self.S
+
+        kal = np.argsort(self.fx)
+        kal = kal[-man:]#the list of those whose violation may be tolerated
+
+        twal = np.argwhere(self.fs) #the legitimate
+        eli = np.unique(np.concatenate((kal,twal)))
+        
+        return regen_gen_algo.pair_selection(self,arg_eligible=eli)
+    
+    def regenerate_itera(self):
+        '''
+        Does nothing since we are not compelled to do that 
+        '''
+        pass
+
+    def regenerate(self):
+        '''
+        Transforms violating entries in x randomly within the [lb, ub) range
+        if the specification allows
+        ==priv||==
+        '''
+        if self.regen_init:
+            regen_gen_algo.regenerate(self)
+        else:
+            pass
+
+    def update_best(self,ite):
+        '''
+        Checks if a new best, that fulfils hard constraint has been found and updates parameters accordingly
+        Trigges the base new_best function for the on_new_best event
+        ==priv|==
+        '''
+        eli = np.argwhere(self.fs)
+        regen_gen_algo.update_best(self,ite,arg_eligible=eli)
