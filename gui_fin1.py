@@ -296,7 +296,8 @@ class Bottom(Frame):
             fit_txt = res.Fit_txt()           
 
             f_fxn = f.Fitness_Fxn(self.nsp,"This is type of Fitness fxn for an allowance quota based genetic algorithm (%s), whose fitness is obtained from the wieghted mean of other fitness fxns, %s"%(name,fit_txt),const_fxns=self.nsp.soft_con_dict,weights=newWeight)
-            tuy = self.nsp.create_genetic_search(pop,mut_rate,maxite,f_fxn,allow_prob=all_prob)
+            regen_init = p.askyesno('Choose initial regenerate or not','Do you want to the initialization to be regenerated')
+            tuy = self.nsp.create_genetic_search(pop,mut_rate,maxite,f_fxn,allow_prob=all_prob,regen_init=regen_init)
             self.attach_new_search(Sear_Moni.Search_Monitor(tuy,name))
 
     def create_pso_search(self):

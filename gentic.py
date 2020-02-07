@@ -290,12 +290,19 @@ class allowance_gen_algo(regen_gen_algo):
         man = self.man
 
         kal = np.argsort(self.fx)
-        kal = kal[-man:]#the list of those whose violation may be tolerated
+        #kal = kal[-man:]#the list of those whose violation may be tolerated#I unknowingly chose the worst rather than the best
+        kal = kal[:man]
 
         twal = (np.nonzero(self.fs))[0] #the legitimate
         eli = np.unique(np.concatenate((kal,twal)))
         
-        return regen_gen_algo.pair_selection(self,arg_eligible=eli)
+        errf = (np.nonzero(np.isfinite(self.fx)))[0]
+
+        real_eli = np.intersect1d(eli,errf)
+        if len(real_eli) > man:
+            return regen_gen_algo.pair_selection(self,arg_eligible=real_eli)
+        else:
+            return regen_gen_algo.pair_selection(self)
     
     def regenerate_itera(self):
         '''
