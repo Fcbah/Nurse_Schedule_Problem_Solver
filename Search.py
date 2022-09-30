@@ -445,7 +445,7 @@ class Search(part_Holder,ab_Search):
     def getfitt(self):
         return self.fitt
 
-    def __init__(self,maxite,Fitness,nsp,show_mean=True):
+    def __init__(self,maxite,Fitness,nsp):
     #def __init__(self,maxite,Fitness,nsp=NSP()):
         '''
         ==priv|==

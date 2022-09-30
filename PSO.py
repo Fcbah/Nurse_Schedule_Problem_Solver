@@ -15,9 +15,9 @@ class PSO(Search.Search):
         self.after_ended()
     
 
-    def __init__(self,pop_size,nsp,Fitness,maxite,lb=0,ub=4,w=0.5,c1=0.5,c2=0.5,pre_begin=False,show_means = False):
+    def __init__(self,pop_size,nsp,Fitness,maxite,lb=0,ub=4,w=0.5,c1=0.5,c2=0.5,pre_begin=False):
         
-        Search.Search.__init__(self,maxite,Fitness,nsp,show_mean=show_means)
+        Search.Search.__init__(self,maxite,Fitness,nsp)
         self.lb = lb*np.ones(self.D())
         self.ub = ub*np.ones(self.D())
         self.S = pop_size
